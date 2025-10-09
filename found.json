@@ -1,0 +1,7 @@
+{
+  "alice_md5": "password",
+  "alice_sha256": "password",
+  "alice_pbkdf2": "password",
+  "alice_bcrypt": "password",
+  "alice_argon2": "password"
+}

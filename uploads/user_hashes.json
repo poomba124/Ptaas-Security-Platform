@@ -1,0 +1,7 @@
+{
+  "alice_md5": "5f4dcc3b5aa765d61d8327deb882cf99",
+  "alice_sha256": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+  "alice_pbkdf2": "pbkdf2$8aad13dc21c1fbf6b338bc9f7e15c031$7332befa99ab705921baa0ecc3f614707fdfbf8a7fd99ad1dd4ba2f5c3089a61",
+  "alice_bcrypt": "$2b$12$r/mv7lKq.HYayB0s9iakMelrtVGs.XN.d/L276Gs0aTm03E2165fS",
+  "alice_argon2": "$argon2id$v=19$m=65536,t=3,p=4$1H41qakPfiRwbpjSyR7REQ$yDQZxqINuhGojsxlkaIYVwXF2255qiHct8g8HXU5G0A"
+}
