@@ -3,5 +3,20 @@
   "alice_sha256": "password",
   "alice_pbkdf2": "password",
   "alice_bcrypt": "password",
-  "alice_argon2": "password"
+  "alice_argon2": "password",
+  "Dobby_md5": "Passw0rd!",
+  "Dobby_sha256": "Passw0rd!",
+  "Dobby_pbkdf2": "Passw0rd!",
+  "Dobby_bcrypt": "Passw0rd!",
+  "Andy_md5": "admin",
+  "Andy_sha256": "admin",
+  "Andy_pbkdf2": "admin",
+  "Dobby_argon2": "Passw0rd!",
+  "Andy_bcrypt": "admin",
+  "Andy_argon2": "admin",
+  "Aarav_md5": "letmein",
+  "Aarav_sha256": "letmein",
+  "Aarav_pbkdf2": "letmein",
+  "Aarav_bcrypt": "letmein",
+  "Aarav_argon2": "letmein"
 }

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Status</title>
+    {% if task.state == 'PENDING' or task.state == 'PROGRESS' %}
+        <meta http-equiv="refresh" content="5">
+    {% endif %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Status</title>
+    {% if task.state == 'PENDING' or task.state == 'PROGRESS' %}
+        <meta http-equiv="refresh" content="5">
+    {% endif %}
+</head>
+<body>
+    <h1>Audit Status for Task: {{ task.id }}</h1>
+    
+    <h2>Current Status: {{ task.state }}</h2>
+
+    {% if task.state == 'SUCCESS' %}
+        <h3>Results:</h3>
+        <pre><code>{{ task.result }}</code></pre>
+    {% elif task.state == 'FAILURE' %}
+        <p>The task failed. Here is the error message:</p>
+        <pre><code>{{ task.result }}</code></pre>
+    {% else %}
+        <p>Your audit is running. This page will automatically refresh every 5 seconds. Please wait...</p>
+    {% endif %}
+
+    <a href="/">Run Another Audit</a>
+</body>
+</html>
+</head>
+<body>
+    <h1>Audit Status for Task: {{ task.id }}</h1>
+    
+    <h2>Current Status: {{ task.state }}</h2>
+
+    {% if task.state == 'SUCCESS' %}
+        <h3>Results:</h3>
+        <pre><code>{{ task.result }}</code></pre>
+    {% elif task.state == 'FAILURE' %}
+        <p>The task failed. Here is the error message:</p>
+        <pre><code>{{ task.result }}</code></pre>
+    {% else %}
+        <p>Your audit is running. This page will automatically refresh every 5 seconds. Please wait...</p>
+    {% endif %}
+
+    <a href="/">Run Another Audit</a>
+</body>
+</html>
