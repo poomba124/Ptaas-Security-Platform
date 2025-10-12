@@ -1,5 +1,4 @@
 123456
 password
-Passw0rd!
 admin
 letmein
