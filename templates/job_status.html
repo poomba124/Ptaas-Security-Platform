@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Status</title>
+    {% if job.status == 'PENDING' or job.status == 'RUNNING' %}
+        <meta http-equiv="refresh" content="5">
+    {% endif %}
+</head>
+<body>
+    <h1>Audit Status</h1>
+    <p><strong>Task ID:</strong> {{ job.task_id }}</p>
+    <p><strong>Status:</strong> {{ job.status }}</p>
+    <p><strong>Submitted:</strong> {{ job.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</p>
+
+    {% if job.status == 'SUCCESS' %}
+        <h3>Results:</h3>
+        <pre><code>{{ job.result_data }}</code></pre>
+        <p><strong>Completed:</strong> {{ job.completed_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</p>
+    {% elif job.status == 'FAILURE' %}
+        <p>The task failed.</p>
+    {% else %}
+        <p>Your audit is running. This page will refresh automatically...</p>
+    {% endif %}
+
+    <a href="/">Run Another Audit</a>
+</body>
+</html>
