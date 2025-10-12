@@ -7,6 +7,8 @@ import hashlib
 import bcrypt
 import time
 import os
+import itertools
+import string
 from typing import Dict
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -97,6 +99,36 @@ def verify_candidate(candidate: str, hash_str: str, htype: str) -> bool:
         return hashlib.sha256(pw_bytes).hexdigest() == hash_str.lower()
     else:
         return False
+def mask_generator(mask: str):
+    """
+    Generates all possible candidates for a given mask.
+    ?l = lowercase, ?u = uppercase, ?d = digit, ?s = special
+    """
+    charsets = {
+        '?l': string.ascii_lowercase,
+        '?u': string.ascii_uppercase,
+        '?d': string.digits,
+        '?s': string.punctuation
+    }
+
+    # --- THIS IS THE CORRECTED LOGIC ---
+    # Instead of splitting, we loop through the mask two characters at a time.
+    groups = []
+    i = 0
+    while i < len(mask):
+        token = mask[i:i+2] # Read two characters, e.g., "?u"
+        if token in charsets:
+            groups.append(charsets[token])
+            i += 2 # Move to the next token
+        else:
+            # Handle an invalid token
+            print(f"Error: Invalid mask token '{token}' found. Please use ?l, ?u, ?d, or ?s.")
+            return
+    # --- END CORRECTION ---
+
+    # The rest of the function works as before
+    for combo in itertools.product(*groups):
+        yield ''.join(combo)
 
 def worker(job_q: queue.Queue, results_q: queue.Queue, user_hashes: Dict[str,str],
            user_types: Dict[str,str], found: Dict[str,str], found_lock: threading.Lock,
@@ -123,25 +155,38 @@ def worker(job_q: queue.Queue, results_q: queue.Queue, user_hashes: Dict[str,str
         job_q.task_done()
 
 def main():
-    # ... (argparse and file loading remains unchanged) ...
     parser = argparse.ArgumentParser()
     parser.add_argument("--hash-file", required=True, help="JSON file with username->hash mapping")
-    parser.add_argument("--wordlist", required=True, help="Wordlist file (one candidate per line)")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker threads")
     parser.add_argument("--output", default="found.json", help="Write found results to JSON")
+
+    # --- NEW: Arguments for selecting the attack mode ---
+    parser.add_argument("--mode", required=True, choices=['dictionary', 'mask'], help="The attack mode to use.")
+    parser.add_argument("--wordlist", help="Path to wordlist file (for dictionary mode).")
+    parser.add_argument("--mask", help="Mask pattern (for mask mode), e.g., ?u?l?l?d.")
     args = parser.parse_args()
 
+    # --- NEW: Validate arguments based on the selected mode ---
+    if args.mode == 'dictionary' and not args.wordlist:
+        print("Error: --wordlist is required for dictionary mode.")
+        return
+    if args.mode == 'mask' and not args.mask:
+        print("Error: --mask is required for mask mode.")
+        return
+
+    # --- File existence checks ---
     if not os.path.isfile(args.hash_file):
         print("Hash file not found:", args.hash_file)
         return
-    if not os.path.isfile(args.wordlist):
+    # Only check for wordlist if in dictionary mode
+    if args.mode == 'dictionary' and not os.path.isfile(args.wordlist):
         print("Wordlist not found:", args.wordlist)
         return
 
     with open(args.hash_file, "r") as f:
         user_hashes = json.load(f)
 
-    # ... (setup for user_types, queues, etc. remains unchanged) ...
+    # --- This setup part remains the same ---
     user_types = {}
     total_hashes_by_type = {}
     for user, h in user_hashes.items():
@@ -165,27 +210,37 @@ def main():
         t.start()
         workers_list.append(t)
 
-    def producer():
-        with open(args.wordlist, "r", encoding="utf-8", errors="ignore") as wl:
-            for line in wl:
-                if stop_event.is_set():
-                    break
-                cand = line.strip()
-                if not cand:
-                    continue
-                
-                # --- MODIFIED: Apply rules to each word from the wordlist ---
-                for rule_candidate in apply_rules(cand):
-                    job_q.put(rule_candidate)
-                # --- END MODIFIED ---
+    # --- MODIFIED: Select the producer based on the attack mode ---
+    producer_thread = None
+    if args.mode == 'dictionary':
+        def dict_producer():
+            with open(args.wordlist, "r", encoding="utf-8", errors="ignore") as wl:
+                for line in wl:
+                    if stop_event.is_set(): break
+                    word = line.strip()
+                    if word:
+                        for candidate in apply_rules(word):
+                            job_q.put(candidate)
+            print("[producer] dictionary finished")
+        producer_thread = threading.Thread(target=dict_producer)
 
-        print("[producer] finished")
+    elif args.mode == 'mask':
+        def mask_producer():
+            for candidate in mask_generator(args.mask):
+                if stop_event.is_set(): break
+                job_q.put(candidate)
+            print("[producer] mask finished")
+        producer_thread = threading.Thread(target=mask_producer)
+    # --- END MODIFIED ---
 
-    prod_thread = threading.Thread(target=producer)
-    prod_thread.daemon = True
-    prod_thread.start()
+    if producer_thread:
+        producer_thread.daemon = True
+        producer_thread.start()
+    else:
+        print("Error: No valid producer for the selected mode.")
+        return
 
-    # ... (The final reporting loop remains unchanged) ...
+    # --- The final reporting loop remains unchanged ---
     print("Started workers:", args.workers)
     start_time = time.time()
     run_completed_naturally = False
@@ -194,7 +249,7 @@ def main():
             try:
                 user, cand, htype, wid = results_q.get(timeout=1.0)
             except queue.Empty:
-                if not prod_thread.is_alive() and job_q.empty():
+                if not producer_thread.is_alive() and job_q.empty():
                     run_completed_naturally = True
                     break
                 continue

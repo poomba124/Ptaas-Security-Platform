@@ -3,13 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <title>Password Audit Uploader</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .form-group { margin-bottom: 1em; }
+    </style>
 </head>
 <body>
     <h1>Upload Hash File for Auditing</h1>
-    <p>Upload a JSON file containing password hashes.</p>
     <form method="post" enctype="multipart/form-data">
-        <input type="file" name="hash_file">
+        
+        <div class="form-group">
+            <label for="hash_file">Upload JSON Hash File:</label><br>
+            <input type="file" name="hash_file" required>
+        </div>
+
+        <div class="form-group">
+            <strong>Select Attack Mode:</strong><br>
+            <input type="radio" id="dict_mode" name="attack_mode" value="dictionary" checked>
+            <label for="dict_mode">Dictionary Attack</label><br>
+            <input type="radio" id="mask_mode" name="attack_mode" value="mask">
+            <label for="mask_mode">Mask Attack</label>
+        </div>
+
+        <div id="dictionary-inputs" class="form-group">
+            <label for="wordlist_file">Upload Wordlist File (optional, uses default if empty):</label><br>
+            <input type="file" name="wordlist_file">
+        </div>
+
+        <div id="mask-inputs" class="form-group" style="display: none;">
+            <label for="mask">Enter Mask Pattern:</label><br>
+            <input type="text" name="mask" placeholder="e.g., ?u?l?l?l?d?d">
+            <p><small>Use ?l=lower, ?u=upper, ?d=digit, ?s=special</small></p>
+        </div>
+
         <input type="submit" value="Start Audit">
     </form>
+
+    <script>
+        const dictRadio = document.getElementById('dict_mode');
+        const maskRadio = document.getElementById('mask_mode');
+        const dictInputs = document.getElementById('dictionary-inputs');
+        const maskInputs = document.getElementById('mask-inputs');
+
+        dictRadio.addEventListener('change', () => {
+            if (dictRadio.checked) {
+                dictInputs.style.display = 'block';
+                maskInputs.style.display = 'none';
+            }
+        });
+
+        maskRadio.addEventListener('change', () => {
+            if (maskRadio.checked) {
+                dictInputs.style.display = 'none';
+                maskInputs.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -23,38 +23,52 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/', methods=['GET', 'POST'])
+# In app.py
+
+@app.route('/', methods=['GET', 'POST'])
 def upload_and_process():
     if request.method == 'POST':
+        # --- File Handling (check that a hash file was uploaded) ---
         if 'hash_file' not in request.files:
-            return "No file part"
+            return "No hash file part"
+        hash_file = request.files['hash_file']
+        if hash_file.filename == '':
+            return "No selected hash file"
         
-        file = request.files['hash_file']
-        if file.filename == '':
-            return "No selected file"
+        # Save the uploaded hash file
+        hash_filepath = os.path.join(app.config['UPLOAD_FOLDER'], hash_file.filename)
+        hash_file.save(hash_filepath)
 
-        if file:
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(filepath)
+        # --- NEW: Read Attack Mode and Prepare Task Arguments ---
+        attack_mode = request.form.get('attack_mode')
+        task_args = {'filepath': hash_filepath} # Common argument for all modes
+        
+        if attack_mode == 'dictionary':
+            # Use the default wordlist we have in our project folder
+            task_args['wordlist_path'] = 'wordlist.txt' 
+            # Note: The upload logic for a custom wordlist is not yet implemented
+        elif attack_mode == 'mask':
+            mask = request.form.get('mask')
+            if not mask:
+                return "Mask pattern is required for Mask Attack"
+            task_args['mask'] = mask
+        else:
+            return "Invalid attack mode selected"
 
-            wordlist_path = 'wordlist.txt'
-            
-            # Instead of running the subprocess, send the task to Celery.
-            # .delay() sends the job to the queue and returns immediately.
-            task = run_cracking_task.delay(filepath, wordlist_path)
-
-            job_document = {
-                'task_id': task.id,
-                'status': 'PENDING',
-                'submitted_at': datetime.utcnow(),
-                'completed_at': None,
-                'hash_file_path': file.filename,
-                'result_data': None
-            }
-
-            jobs_collection.insert_one(job_document)
-            
-            # Redirect the user to a new page where they can see the task status.
-            return redirect(url_for('job_status', task_id=task.id))
+        # --- CORRECTED CALL: Launch Celery Task with keyword arguments ---
+        task = run_cracking_task.delay(attack_mode=attack_mode, **task_args)
+        
+        # --- Create DB Record (this part is correct) ---
+        job_document = {
+            'task_id': task.id,
+            'status': 'PENDING',
+            'submitted_at': datetime.utcnow(),
+            'hash_file_path': hash_file.filename,
+            'result_data': None
+        }
+        jobs_collection.insert_one(job_document)
+        
+        return redirect(url_for('job_status', task_id=task.id))
 
     return render_template('index.html')
 

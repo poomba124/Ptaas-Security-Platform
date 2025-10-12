@@ -1,22 +1,7 @@
 {
-  "Dobby_md5": "passw0rd",
-  "Dobby_sha256": "passw0rd",
-  "Dobby_pbkdf2": "passw0rd",
-  "Dobby_bcrypt": "passw0rd",
-  "Dobby_argon2": "passw0rd",
-  "alice_md5": "password123",
-  "alice_sha256": "password123",
-  "alice_pbkdf2": "password123",
-  "alice_bcrypt": "password123",
-  "alice_argon2": "password123",
-  "Andy_md5": "admin",
-  "Andy_sha256": "admin",
-  "Andy_pbkdf2": "admin",
-  "Andy_bcrypt": "admin",
-  "Andy_argon2": "admin",
-  "Aarav_md5": "letmein",
-  "Aarav_sha256": "letmein",
-  "Aarav_pbkdf2": "letmein",
-  "Aarav_bcrypt": "letmein",
-  "Aarav_argon2": "letmein"
+  "Bob_md5": "ab1",
+  "Bob_sha256": "ab1",
+  "Bob_pbkdf2": "ab1",
+  "Bob_bcrypt": "ab1",
+  "Bob_argon2": "ab1"
 }

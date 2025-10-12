@@ -10,11 +10,10 @@ ph = PasswordHasher()
 
 # A single list of users and their passwords
 users = {
-    "alice": b"password123",
-    "Aarav": b"letmein",
-    "Dobby": b"passw0rd",
-    "Andy": b"admin",
-    "Tuntun": b"dino"
+    #"alice": b"password123",
+    "Bob": b"ab1"
+    #"Dobby": b"passw0rd",
+    #"Andy": b"admin",
 }
 
 out = {}

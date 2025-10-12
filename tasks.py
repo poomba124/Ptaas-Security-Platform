@@ -16,7 +16,7 @@ jobs_collection = db['audit_jobs']
 celery = Celery('tasks', config_source='celery_config')
 
 @celery.task(bind=True)  # Add bind=True to access task properties like ID
-def run_cracking_task(self, filepath, wordlist_path):
+def run_cracking_task(self, attack_mode, **kwargs):
     """
     A Celery task that runs the cracking script and updates the database.
     """
@@ -30,46 +30,38 @@ def run_cracking_task(self, filepath, wordlist_path):
         {'$set': {'status': 'RUNNING'}}
     )
 
+    filepath = kwargs.get('filepath')
+
     command = [
         sys.executable,
         'cracker.py', 
         '--hash-file', filepath, 
-        '--wordlist', wordlist_path
+        '--mode', attack_mode # Pass the mode to the script
     ]
     
+    if attack_mode == 'dictionary':
+        command.extend(['--wordlist', kwargs.get('wordlist_path')])
+    elif attack_mode == 'mask':
+        command.extend(['--mask', kwargs.get('mask')])
+    # --- End command building ---
+    
     try:
-        # Run the cracking script
-        result = subprocess.run(
-            command, 
-            capture_output=True, 
-            text=True, 
-            check=True
-        )
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
         output = result.stdout
-
-        # --- 2. UPDATE STATUS TO SUCCESS ---
-        print(f"Worker finished job {task_id} successfully.")
+        
+        # Update DB on success
         jobs_collection.update_one(
             {'task_id': task_id},
-            {'$set': {
-                'status': 'SUCCESS',
-                'result_data': output,
-                'completed_at': datetime.utcnow()
-            }}
+            {'$set': {'status': 'SUCCESS', 'result_data': output, 'completed_at': datetime.utcnow()}}
         )
         return output
         
     except subprocess.CalledProcessError as e:
         error_output = e.stdout + e.stderr
         
-        # --- 3. UPDATE STATUS TO FAILURE ---
-        print(f"Worker job {task_id} failed.")
+        # Update DB on failure
         jobs_collection.update_one(
             {'task_id': task_id},
-            {'$set': {
-                'status': 'FAILURE',
-                'result_data': error_output,
-                'completed_at': datetime.utcnow()
-            }}
+            {'$set': {'status': 'FAILURE', 'result_data': error_output, 'completed_at': datetime.utcnow()}}
         )
         return error_output
