@@ -12,6 +12,8 @@ import string
 from typing import Dict
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+import re
+from collections import Counter
 
 ph = PasswordHasher()
 
@@ -99,6 +101,52 @@ def verify_candidate(candidate: str, hash_str: str, htype: str) -> bool:
         return hashlib.sha256(pw_bytes).hexdigest() == hash_str.lower()
     else:
         return False
+    
+def analyze_passwords(cracked_passwords: list, company_name: str = None):
+    """Analyzes a list of cracked passwords for common weaknesses."""
+    analysis = {
+        "common_patterns": {
+            "contains_company_name_percent": 0.0,
+            "ends_with_year_percent": 0.0,
+            "is_all_lowercase_percent": 0.0
+        },
+        "recommendations": [
+            "Enforce Multi-Factor Authentication (MFA) for all users to mitigate the risk from compromised passwords.",
+            "Increase the minimum password length requirement to at least 12 characters.",
+            "Implement a breached password filter to prevent users from choosing passwords known to be compromised.",
+            "Use these anonymous statistics to conduct security awareness training for all employees."
+        ]
+    }
+    
+    if not cracked_passwords:
+        return analysis
+
+    count = len(cracked_passwords)
+    company_name_count = 0
+    ends_with_year_count = 0
+    all_lowercase_count = 0
+
+    for item in cracked_passwords:
+        pw = item['password']
+        
+        # Check for company name (if provided)
+        if company_name and company_name.lower() in pw.lower():
+            company_name_count += 1
+        
+        # Check if password ends in a 4-digit number (like a year)
+        if re.search(r'\d{4}$', pw):
+            ends_with_year_count += 1
+            
+        # Check if the password is all lowercase
+        if pw.islower():
+            all_lowercase_count += 1
+            
+    analysis["common_patterns"]["contains_company_name_percent"] = round((company_name_count / count) * 100, 2)
+    analysis["common_patterns"]["ends_with_year_percent"] = round((ends_with_year_count / count) * 100, 2)
+    analysis["common_patterns"]["is_all_lowercase_percent"] = round((all_lowercase_count / count) * 100, 2)
+    
+    return analysis
+
 def mask_generator(mask: str):
     """
     Generates all possible candidates for a given mask.
@@ -154,39 +202,46 @@ def worker(job_q: queue.Queue, results_q: queue.Queue, user_hashes: Dict[str,str
                 pass
         job_q.task_done()
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--hash-file", required=True, help="JSON file with username->hash mapping")
-    parser.add_argument("--workers", type=int, default=4, help="Number of worker threads")
-    parser.add_argument("--output", default="found.json", help="Write found results to JSON")
+# In cracker.py
 
-    # --- NEW: Arguments for selecting the attack mode ---
-    parser.add_argument("--mode", required=True, choices=['dictionary', 'mask'], help="The attack mode to use.")
-    parser.add_argument("--wordlist", help="Path to wordlist file (for dictionary mode).")
-    parser.add_argument("--mask", help="Mask pattern (for mask mode), e.g., ?u?l?l?d.")
+def main():
+    # --- This part for argparse remains the same ---
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--hash-file", required=True)
+    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--mode", required=True, choices=['dictionary', 'mask'])
+    parser.add_argument("--wordlist", help="Path for dictionary mode")
+    parser.add_argument("--mask", help="Mask pattern for mask mode")
+    parser.add_argument("--company-name", help="Company name to check for in passwords.")
     args = parser.parse_args()
 
-    # --- NEW: Validate arguments based on the selected mode ---
+    # --- Argument validation remains the same ---
     if args.mode == 'dictionary' and not args.wordlist:
-        print("Error: --wordlist is required for dictionary mode.")
+        print(json.dumps({"error": "--wordlist is required for dictionary mode."}))
         return
     if args.mode == 'mask' and not args.mask:
-        print("Error: --mask is required for mask mode.")
+        print(json.dumps({"error": "--mask is required for mask mode."}))
         return
-
-    # --- File existence checks ---
-    if not os.path.isfile(args.hash_file):
-        print("Hash file not found:", args.hash_file)
-        return
-    # Only check for wordlist if in dictionary mode
-    if args.mode == 'dictionary' and not os.path.isfile(args.wordlist):
-        print("Wordlist not found:", args.wordlist)
-        return
+    # ... (other file checks) ...
 
     with open(args.hash_file, "r") as f:
         user_hashes = json.load(f)
 
-    # --- This setup part remains the same ---
+    # --- NEW: Initialize the report_data dictionary (This is the fix) ---
+    report_data = {
+        "summary": {
+            "total_hashes": len(user_hashes),
+            "cracked_count": 0,
+            "crack_rate_percent": 0.0,
+            "duration_seconds": 0.0
+        },
+        "performance_benchmark": {},
+        "cracked_passwords": [],
+        "top_passwords": [],
+        "analysis": {} # Placeholder for the analysis results
+    }
+
+    # --- The setup for workers and queues remains the same ---
     user_types = {}
     total_hashes_by_type = {}
     for user, h in user_hashes.items():
@@ -194,15 +249,14 @@ def main():
         user_types[user] = t
         total_hashes_by_type.setdefault(t, 0)
         total_hashes_by_type[t] += 1
-        if t == "unknown":
-            print(f"[warn] {user}: unknown hash type for '{h[:30]}...'")
-
+    
     job_q = queue.Queue(maxsize=20000)
     results_q = queue.Queue()
     stop_event = threading.Event()
     found = {}
     found_lock = threading.Lock()
     timing_data = {htype: {'found_count': 0, 'end_time': None} for htype in total_hashes_by_type}
+    
     workers_list = []
     for i in range(args.workers):
         t = threading.Thread(target=worker, args=(job_q, results_q, user_hashes, user_types, found, found_lock, stop_event, i+1))
@@ -210,10 +264,11 @@ def main():
         t.start()
         workers_list.append(t)
 
-    # --- MODIFIED: Select the producer based on the attack mode ---
+    # --- The producer logic remains the same ---
     producer_thread = None
     if args.mode == 'dictionary':
         def dict_producer():
+            # ... (your existing dict_producer code) ...
             with open(args.wordlist, "r", encoding="utf-8", errors="ignore") as wl:
                 for line in wl:
                     if stop_event.is_set(): break
@@ -221,64 +276,69 @@ def main():
                     if word:
                         for candidate in apply_rules(word):
                             job_q.put(candidate)
-            print("[producer] dictionary finished")
         producer_thread = threading.Thread(target=dict_producer)
-
     elif args.mode == 'mask':
         def mask_producer():
+            # ... (your existing mask_producer code) ...
             for candidate in mask_generator(args.mask):
                 if stop_event.is_set(): break
                 job_q.put(candidate)
-            print("[producer] mask finished")
         producer_thread = threading.Thread(target=mask_producer)
-    # --- END MODIFIED ---
-
+    
     if producer_thread:
         producer_thread.daemon = True
         producer_thread.start()
-    else:
-        print("Error: No valid producer for the selected mode.")
-        return
 
-    # --- The final reporting loop remains unchanged ---
-    print("Started workers:", args.workers)
     start_time = time.time()
-    run_completed_naturally = False
+    
+    # --- The result collection loop now populates the report_data dict ---
     try:
         while len(found) < len(user_hashes):
             try:
                 user, cand, htype, wid = results_q.get(timeout=1.0)
             except queue.Empty:
                 if not producer_thread.is_alive() and job_q.empty():
-                    run_completed_naturally = True
                     break
                 continue
-            print(f"[FOUND by worker {wid}] {user} -> {cand} (type={htype})")
+            
+            # MODIFIED: Instead of printing, store the found password
+            report_data["cracked_passwords"].append({
+                "user": user,
+                "password": cand,
+                "hash_type": htype
+            })
+            
             if htype in timing_data:
                 timing_data[htype]['found_count'] += 1
                 if timing_data[htype]['found_count'] == total_hashes_by_type[htype]:
                     timing_data[htype]['end_time'] = time.time()
     except KeyboardInterrupt:
-        print("\nInterrupted by user; stopping...")
+        pass
     finally:
         stop_event.set()
         duration = time.time() - start_time
-        print("\nRun finished. Total time: {:.2f}s. Found: {}/{}".format(duration, len(found), len(user_hashes)))
-        print("\n--- Performance Breakdown ---")
+
+        # --- MODIFIED: Finalize the report_data dictionary ---
+        report_data["summary"]["duration_seconds"] = round(duration, 2)
+        report_data["summary"]["cracked_count"] = len(found)
+        if report_data["summary"]["total_hashes"] > 0:
+            rate = (len(found) / len(user_hashes)) * 100
+            report_data["summary"]["crack_rate_percent"] = round(rate, 2)
+
         for htype, data in timing_data.items():
             if data['end_time']:
                 crack_duration = data['end_time'] - start_time
-                print(f"Time to crack all {htype.upper()} hashes: {crack_duration:.4f} seconds ({data['found_count']}/{total_hashes_by_type[htype]} found)")
-            elif data['found_count'] > 0:
-                if run_completed_naturally:
-                    print(f"Cracked {data['found_count']}/{total_hashes_by_type[htype]} {htype.upper()} hashes. (Run completed)")
-                else:
-                    print(f"Cracked {data['found_count']}/{total_hashes_by_type[htype]} {htype.upper()} hashes, but run ended before all were found.")
-            else:
-                print(f"No {htype.upper()} hashes were cracked.")
-        with open(args.output, "w") as outf:
-            json.dump(found, outf, indent=2)
-        print("\nWrote found results to", args.output)
+                report_data["performance_benchmark"][htype.upper()] = round(crack_duration, 4)
+        
+        if report_data["cracked_passwords"]:
+            password_counts = Counter(item['password'] for item in report_data["cracked_passwords"])
+            report_data["top_passwords"] = [{"password": p, "count": c} for p, c in password_counts.most_common(5)]
+
+        analysis_results = analyze_passwords(report_data["cracked_passwords"], args.company_name)
+        report_data["analysis"] = analysis_results
+
+        # The final and only output of the script is now a single JSON object
+        print(json.dumps(report_data, indent=4))
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,11 @@
+Flask
+celery
+redis
+bcrypt
+argon2-cffi
+pymongo
+eventlet
+
+#sudo service redis-server start
+#redis-cli ping
+#hostname -I

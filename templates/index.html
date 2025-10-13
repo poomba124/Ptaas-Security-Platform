@@ -11,7 +11,12 @@
 <body>
     <h1>Upload Hash File for Auditing</h1>
     <form method="post" enctype="multipart/form-data">
-        
+        <div class="form-group">
+            <label for="company_name">Company Name (optional, for analysis):</label><br>
+            <input type="text" name="company_name" placeholder="e.g., SecureCorp">
+        </div>
+
+        <input type="submit" value="Start Audit">
         <div class="form-group">
             <label for="hash_file">Upload JSON Hash File:</label><br>
             <input type="file" name="hash_file" required>

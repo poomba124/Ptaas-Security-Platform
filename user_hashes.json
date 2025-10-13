@@ -1,7 +1,22 @@
 {
-  "Bob_md5": "68b6a776378decbb4a79cda89087c4ce",
-  "Bob_sha256": "ca5ba87c93d42f8a45c1e0f569bba8bac92c80f4ce6c864bd44d136572411b7e",
-  "Bob_pbkdf2": "pbkdf2$9c87ef26f44c6b7ab63ff3c6d6e86cd6$f5e4c815cc9ce58177221f531308c8a827d299f80bfdaf1b67ce382114b08427",
-  "Bob_bcrypt": "$2b$12$yyoM.avRablf0C.O90.74ODUyeAEywXQbIRkEUUO00NlmBlWB6Fzu",
-  "Bob_argon2": "$argon2id$v=19$m=65536,t=3,p=4$1A22FbDpzBGgToXf9Taczw$TniqnZsEnAfL8sVRqGj+JcfXa4s5pvnIFcdh48wTHCY"
+  "alice_md5": "482c811da5d5b4bc6d497ffa98491e38",
+  "alice_sha256": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+  "alice_pbkdf2": "pbkdf2$7360928b1f9777d949e686ecbcd50173$23a66ba20b23e8a3c65a44994d585f59f3362e4a02569248461f5f576eb9d37e",
+  "alice_bcrypt": "$2b$12$.tdZTm/KjcsCnOf81vzEAO4M1ZpVXFxfvr2Ls7zqFurfSSbybFUcm",
+  "alice_argon2": "$argon2id$v=19$m=65536,t=3,p=4$M7/ScUNX4k+HwjwjxLUtbw$SKvX0DkmLX5D4W+j3KCagQdQLHnmmuwPngpHaKQY674",
+  "Bob_md5": "c99f1621ddb8d08a4cac6ee4b6989349",
+  "Bob_sha256": "41a022c9fb129a1872dc7b4ce94fb2b0cc6626b3f3c11d580ecd88d31a7fb84a",
+  "Bob_pbkdf2": "pbkdf2$3eed45f86f461720e64902b42b3de9e2$dd9f1037256f997c4bde0c15e2cd3fcdb16ee9f44f94afdd03f2ac46415e848f",
+  "Bob_bcrypt": "$2b$12$ZEL1gWGdnreP7rpR63rQNe2OpCjau5Gp21T0bBOkezRRgNKHniOJi",
+  "Bob_argon2": "$argon2id$v=19$m=65536,t=3,p=4$Y9m7be9yoGNYuelWrTE7bQ$FNUtmwoiCf9dmi35T8Skb/7KvhIQGdNTTf/w17R8A+Q",
+  "Dobby_md5": "bed128365216c019988915ed3add75fb",
+  "Dobby_sha256": "8f0e2f76e22b43e2855189877e7dc1e1e7d98c226c95db247cd1d547928334a9",
+  "Dobby_pbkdf2": "pbkdf2$f642977109c2c88ef2ec247a9c5f08f2$cc96169676e0fe6cd0c2272ab5dfd66beb39ea922e8a16885c042c5ae7cefbd3",
+  "Dobby_bcrypt": "$2b$12$tENGdJp/PQ47esxOgNDAXugHT28lU1nQ9e7DZN8dypFi3IUCMg4Gm",
+  "Dobby_argon2": "$argon2id$v=19$m=65536,t=3,p=4$SlIbi+RmLsRiGCn4f2NimA$9QYglBBUaji1cjrMIhcWecYXbnicS9WuKeBicktg100",
+  "Andy_md5": "5f39e92e2f6c880590a61f2d0418cbb7",
+  "Andy_sha256": "cdd36125b80b31a48608d263f9a5c23c86a6b8dd3953fb688b5f20beda2c5a85",
+  "Andy_pbkdf2": "pbkdf2$f9c2f6315dbd192434bfa5806044ddfa$315fbc2a71b5c3ea13539df6c5a9961016480b46d7b443d03118849aa4b4bd38",
+  "Andy_bcrypt": "$2b$12$BYJGYPpa28T5Q2q689nWLOh.EsPruz9iBxG6rBgU3F2R2cyvI4QKe",
+  "Andy_argon2": "$argon2id$v=19$m=65536,t=3,p=4$TtVLBDJThCwAT8B/JyrKxA$yZ3V/u5mYsF7sdoOaJZ3jfyVM75Y/X3hq3Nn+VMXF4w"
 }

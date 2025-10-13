@@ -1,7 +1,7 @@
 {
-  "Bob_md5": "ab1",
-  "Bob_sha256": "ab1",
-  "Bob_pbkdf2": "ab1",
-  "Bob_bcrypt": "ab1",
-  "Bob_argon2": "ab1"
+  "Bob_md5": "Ab1",
+  "Bob_sha256": "Ab1",
+  "Bob_pbkdf2": "Ab1",
+  "Bob_bcrypt": "Ab1",
+  "Bob_argon2": "Ab1"
 }

@@ -38,7 +38,9 @@ def run_cracking_task(self, attack_mode, **kwargs):
         '--hash-file', filepath, 
         '--mode', attack_mode # Pass the mode to the script
     ]
-    
+    company_name = kwargs.get('company_name')
+    if company_name:
+        command.extend(['--company-name', company_name])
     if attack_mode == 'dictionary':
         command.extend(['--wordlist', kwargs.get('wordlist_path')])
     elif attack_mode == 'mask':

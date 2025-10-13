@@ -3,26 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <title>Job Status</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; }
+        .container { max-width: 1200px; margin: 2em auto; padding: 2em; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #333; }
+        .metrics { display: flex; justify-content: space-around; text-align: center; margin: 2em 0; }
+        .metric { padding: 1em; border-radius: 8px; background: #e8f0fe; width: 30%; }
+        .metric h3 { margin-top: 0; }
+        .metric .value { font-size: 2.5em; font-weight: bold; color: #1a73e8; }
+        .charts { display: flex; justify-content: space-between; gap: 2em; margin-top: 2em; }
+        .chart-container { width: 48%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 2em; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        pre { background: #eee; padding: 1em; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     {% if job.status == 'PENDING' or job.status == 'RUNNING' %}
         <meta http-equiv="refresh" content="5">
     {% endif %}
 </head>
 <body>
-    <h1>Audit Status</h1>
-    <p><strong>Task ID:</strong> {{ job.task_id }}</p>
-    <p><strong>Status:</strong> {{ job.status }}</p>
-    <p><strong>Submitted:</strong> {{ job.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</p>
+    <div class="container">
+        <h1>Audit Report</h1>
+        <p><strong>Task ID:</strong> {{ job.task_id }}</p>
+        {% set status_color = 'green' if job.status == 'SUCCESS' else 'orange' %}
+        <p><strong>Status:</strong> <strong style="color: {{ status_color }}">{{ job.status }}</strong></p>
+        {% if job.status == 'SUCCESS' and job.result_data.summary %}
+            <div class="metrics">
+                <div class="metric">
+                    <h3>Total Hashes</h3>
+                    <div class="value">{{ job.result_data.summary.total_hashes }}</div>
+                </div>
+                <div class="metric">
+                    <h3>Passwords Cracked</h3>
+                    <div class="value">{{ job.result_data.summary.cracked_count }}</div>
+                </div>
+                <div class="metric">
+                    <h3>Crack Rate</h3>
+                    <div class="value">{{ job.result_data.summary.crack_rate_percent }}%</div>
+                </div>
+            </div>
 
-    {% if job.status == 'SUCCESS' %}
-        <h3>Results:</h3>
-        <pre><code>{{ job.result_data }}</code></pre>
-        <p><strong>Completed:</strong> {{ job.completed_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</p>
-    {% elif job.status == 'FAILURE' %}
-        <p>The task failed.</p>
-    {% else %}
-        <p>Your audit is running. This page will refresh automatically...</p>
-    {% endif %}
+            <div class="charts">
+                <div class="chart-container">
+                    <h3>Performance Benchmark (Seconds to Crack)</h3>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Top 5 Cracked Passwords</h3>
+                    <canvas id="topPasswordsChart"></canvas>
+                </div>
+            </div>
 
-    <a href="/">Run Another Audit</a>
+            <h3>Detailed Findings</h3>
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Password</th><th>Hash Type</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in job.result_data.cracked_passwords %}
+                        <tr>
+                            <td>{{ item.user }}</td>
+                            <td>{{ item.password }}</td>
+                            <td>{{ item.hash_type }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        
+        <script>
+            // Pass data from Flask/Jinja2 to JavaScript
+            const reportData = {{ job.result_data | tojson }};
+
+            // --- Performance Bar Chart ---
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            const perfData = reportData.performance_benchmark;
+            new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(perfData),
+                    datasets: [{
+                        label: 'Time in Seconds',
+                        data: Object.values(perfData),
+                        backgroundColor: 'rgba(26, 115, 232, 0.6)',
+                        borderColor: 'rgba(26, 115, 232, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+
+            // --- Top Passwords Pie Chart ---
+            const topCtx = document.getElementById('topPasswordsChart').getContext('2d');
+            const topData = reportData.top_passwords;
+            new Chart(topCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: topData.map(p => p.password),
+                    datasets: [{
+                        label: 'Count',
+                        data: topData.map(p => p.count),
+                        backgroundColor: ['#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC']
+                    }]
+                }
+            });
+        </script>
+
+        {% elif job.status == 'FAILURE' %}
+            <h3>Task Failed</h3>
+            <pre><code>{{ job.result_data }}</code></pre>
+        {% else %}
+            <p>Your audit is running. This page will refresh automatically...</p>
+        {% endif %}
+
+        <a href="/">Run Another Audit</a>
+    </div>
 </body>
 </html>
