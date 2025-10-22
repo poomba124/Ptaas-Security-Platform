@@ -17,18 +17,35 @@ users = {
     # Simple Dictionary Hits
     "alice": b"password",
     "bob": b"123456",
-    # Rule-Based Hits (from 'password')
-    "charlie": b"Password123",
-    "diana": b"p@ssw0rd!",
-    # Keyboard Pattern
-    "edward": b"qwerty123",
-    # Company Name Related (Example: company = "TestCorp")
-    "frank": b"Testcorp2024",
-    "grace": b"adminTestcorp",
-    # Mask Hit (Example: ?u?l?l?d?d?s)
-    "henry": b"Sec12!",
-    # A stronger password (won't be found by simple lists/rules)
-    "irene": b"Str0ngP@sswOrd!_XyZ"
+    "charlie": b"qwerty",
+    "diana": b"football",
+    "edward": b"welcome",
+    "fiona": b"dragon",
+
+    # Rule-Based Hits (Capitalization, Suffixes, Leetspeak from wordlist)
+    "george": b"Password123", # From 'password'
+    "hannah": b"Welcome!",    # From 'welcome'
+    "ian": b"Qwerty1234",  # From 'qwerty'
+    "julia": b"dr@gon",      # From 'dragon' (leetspeak 'a')
+    "kevin": b"f00tball",    # From 'football' (leetspeak 'o')
+    "laura": b"Sun$hine",    # From 'sunshine' (leetspeak 's' + capitalization)
+
+    # Keyboard Pattern (Will only be classified if cracked)
+    "mike": b"asdfgh",
+
+    # More Complex / Potentially Uncrackable by basic rules/list
+    "nancy": b"MyP@sswOrd!2024",
+    "oliver": b"Sup3rS3cur3!",
+    "penny": b"Manipal!@#", # Example using location context
+    "quentin": b"P@$$wOrdRuLe$",
+
+    # Common Variations
+    "rita": b"password!",
+    "steve": b"admin123",
+    "tina": b"secret1",
+    "umar": b"india123", # Example using location context
+    "violet": b"123456!",
+    "walter": b"welcome1"
 }
 
 out = {}

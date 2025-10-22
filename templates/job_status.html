@@ -590,6 +590,15 @@
                     <h3>Time to Crack Benchmark (Seconds)</h3>
                     <canvas id="performanceChart"></canvas>
                 </div>
+                <div class="chart-container">
+                    <h3>Vulnerability Classification</h3>
+                    <canvas id="vulnerabilityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="analysis-section" style="margin-top: 2em;"> <h3>Cracked Password Entropy Distribution (Bits)</h3>
+                <div style="max-width: 600px; margin: auto;"> <canvas id="entropyChart"></canvas>
+                </div>
             </div>
 
             <h3>Detailed Cracked Hash Table</h3>
@@ -621,7 +630,7 @@
             <script>
                 // This script block should only run if job.status == 'SUCCESS'
                 const reportData = {{ job.result_data | tojson }};
-                let performanceChart;
+                let performanceChart, vulnerabilityChart, entropyChart;
 
                 // --- ADD THIS LOG ---
                 console.log("Full Report Data Received by JS:", reportData); 
@@ -634,7 +643,8 @@
                         textColor: isDark ? rootStyles.getPropertyValue('--color-text-secondary') : rootStyles.getPropertyValue('--color-text'),
                         gridColor: isDark ? rootStyles.getPropertyValue('--color-border') : rootStyles.getPropertyValue('--color-border'),
                         barColor: isDark ? rootStyles.getPropertyValue('--color-primary') : 'rgba(30, 136, 229, 0.8)',
-                        doughnutColors: ['#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC'] // Fixed colors for contrast
+                        doughnutColors: ['#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC'], // Fixed colors for contrast
+                        pieColors: ['#DB4437', '#FF9800', '#F4B400', '#757575']
                     };
                 }
 
@@ -686,9 +696,124 @@
             perfCtx.textAlign = "center";
             perfCtx.fillText("No benchmark data available to display.", perfCtx.canvas.width / 2, 50);
         }
-                }
 
-        // --- Top Passwords Chart code was REMOVED ---
+        const vulnCtx = document.getElementById('vulnerabilityChart').getContext('2d');
+                    const vulnData = reportData.analysis ? reportData.analysis.vulnerability_classification : null; // Get data
+
+                    console.log("Vulnerability Classification Data:", vulnData); // Log data
+
+                    if (vulnData && typeof vulnData === 'object' && Object.keys(vulnData).length > 0) {
+                        const labels = Object.keys(vulnData).map(key => key.replace(/_/g, ' ')); // Make labels readable
+                        const dataValues = Object.values(vulnData);
+
+                        console.log("Vulnerability Labels:", labels);
+                        console.log("Vulnerability Values:", dataValues);
+
+                        // Only create chart if there's data to show
+                        if (dataValues.some(v => v > 0)) {
+                           vulnerabilityChart = new Chart(vulnCtx, {
+                                type: 'doughnut', // Or 'pie'
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        label: 'Count',
+                                        data: dataValues,
+                                        backgroundColor: colors.pieColors // Use defined colors
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: true,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top', // Position legend nicely
+                                            labels: { color: colors.textColor }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                             console.log("No vulnerability data found (all counts are zero).");
+                             vulnCtx.font = "16px Inter"; vulnCtx.fillStyle = colors.textColor; vulnCtx.textAlign = "center";
+                             vulnCtx.fillText("No vulnerability classifications found.", vulnCtx.canvas.width / 2, 50);
+                        }
+                    } else {
+                        console.error("Cannot create Vulnerability Chart: Data is missing or invalid.");
+                        vulnCtx.font = "16px Inter"; vulnCtx.fillStyle = colors.textColor; vulnCtx.textAlign = "center";
+                        vulnCtx.fillText("Vulnerability data not available.", vulnCtx.canvas.width / 2, 50);
+                    }
+
+                    const entropyCtx = document.getElementById('entropyChart').getContext('2d');
+                    const crackedPasswords = reportData.cracked_passwords || [];
+                    console.log("Cracked Passwords for Entropy:", crackedPasswords);
+
+                    if (crackedPasswords.length > 0) {
+                        // Define entropy ranges/bins
+                        const entropyBins = {
+                            "Very Weak (0-3)": 0,
+                            "Weak (3-4)": 0,
+                            "Moderate (4-6)": 0,
+                            "Strong (6+)": 0
+                        };
+                        const binLabels = Object.keys(entropyBins);
+
+                        // Categorize each password's entropy
+                        crackedPasswords.forEach(item => {
+                            const entropy = item.entropy; // Assumes entropy is calculated and stored
+                            if (typeof entropy === 'number') {
+                                if (entropy < 3) entropyBins["Very Weak (0-3)"]++;
+                                else if (entropy < 4) entropyBins["Weak (3-4)"]++;
+                                else if (entropy < 6) entropyBins["Moderate (4-6)"]++;
+                                else entropyBins["Strong (6+)"]++;
+                            }
+                        });
+
+                        const entropyDataValues = Object.values(entropyBins);
+                        console.log("Entropy Bins:", entropyBins);
+
+                        entropyChart = new Chart(entropyCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: binLabels,
+                                datasets: [{
+                                    label: 'Number of Cracked Passwords',
+                                    data: entropyDataValues,
+                                    backgroundColor: [ // Different colors for strength
+                                        colors.pieColors[1], // Red for Very Weak
+                                        colors.pieColors[2], // Yellow for Weak
+                                        colors.pieColors[0], // Blue for Moderate
+                                        colors.pieColors[3]  // Green for Strong
+                                    ],
+                                    borderColor: colors.pieColors.map(c => c.replace('0.8', '1')),
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y', // Makes it a horizontal bar chart - easier to read labels
+                                responsive: true,
+                                maintainAspectRatio: true, // Adjust as needed
+                                scales: {
+                                    x: { // Now X axis is the count
+                                        beginAtZero: true,
+                                        grid: { color: colors.gridColor },
+                                        ticks: { color: colors.textColor }
+                                    },
+                                    y: { // Y axis is the category
+                                        grid: { display: false },
+                                        ticks: { color: colors.textColor }
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false } // Hide legend, labels are clear
+                                }
+                            }
+                        });
+                    } else {
+                        console.error("Cannot create Entropy Chart: No cracked password data available.");
+                        entropyCtx.font = "16px Inter"; entropyCtx.fillStyle = colors.textColor; entropyCtx.textAlign = "center";
+                        entropyCtx.fillText("No entropy data available.", entropyCtx.canvas.width / 2, 50);
+                    }
+                }     
     
                 
                 function updateChartTheme(chart) {
@@ -714,6 +839,10 @@
                         chart.data.datasets[0].borderColor = colors.barColor.replace('0.8', '1');
                     }
                     
+                    if (chart.config.type === 'doughnut' && chart.options.plugins.legend) {
+                       chart.options.plugins.legend.labels.color = colors.textColor;
+                    }
+
                     chart.update();
                 }
                 
@@ -737,13 +866,12 @@
                 
                 // Theme switch listener now calls update on existing charts
                 document.getElementById('theme-switch').addEventListener('change', () => {
-                    // Slight delay to allow CSS variables to update
                     setTimeout(() => {
                         updateChartTheme(performanceChart);
-                        updateChartTheme(topPasswordsChart);
+                        updateChartTheme(vulnerabilityChart); // Add update for new chart
+                        updateChartTheme(entropyChart); // Add update for new chart
                     }, 100);
                 });
-                // --- END Security Score dynamic class application ---
             </script>
 
         {% elif job.status == 'FAILURE' %}
