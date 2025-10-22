@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; }
+        .container { max-width: 1200px; margin: 2em auto; padding: 2em; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 2em; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        a { color: #1a73e8; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audit Job History</h1>
+        <p><a href="/">Run a New Audit</a></p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Submitted At (UTC)</th>
+                    <th>Status</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.task_id }}</td>
+                        <td>{{ job.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ job.status }}</td>
+                        <td>
+                            {% if job.status == 'SUCCESS' or job.status == 'FAILURE' %}
+                                <a href="{{ url_for('job_status', task_id=job.task_id) }}">View Report</a>
+                            {% else %}
+                                In Progress...
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

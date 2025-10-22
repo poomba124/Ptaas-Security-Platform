@@ -1,5 +1,3 @@
-# run_worker.py
-
 import eventlet
 # Apply the monkey patch here, at the very beginning.
 eventlet.monkey_patch()

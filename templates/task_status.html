@@ -3,25 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <title>Audit Status</title>
+    <style>
+        /* ---------------------- THEME VARIABLES ---------------------- */
+        :root {
+            --color-primary: #1e88e5; /* Blue */
+            --color-primary-hover: #1565c0;
+            --color-background: #f0f2f5; /* Light Gray Background */
+            --color-surface: #ffffff; /* White Card/Container */
+            --color-text: #212121; /* Dark Text */
+            --color-text-secondary: #757575;
+            --color-border: #e0e0e0;
+            --color-success: #4caf50;
+            --color-failure: #e53935;
+        }
+        [data-theme='dark'] {
+            --color-primary: #64b5f6;
+            --color-primary-hover: #42a5f5;
+            --color-background: #121212; /* Dark Background */
+            --color-surface: #1e1e1e; /* Dark Card/Container */
+            --color-text: #e0e0e0; /* Light Text */
+            --color-text-secondary: #bdbdbd;
+            --color-border: #303030;
+            --color-success: #81c784;
+            --color-failure: #e57373;
+        }
+
+        /* ---------------------- BASE STYLES ---------------------- */
+        * {
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1000px;
+            width: 95%;
+            margin: 3em auto;
+            padding: 2em;
+            background: var(--color-surface);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            animation: fadeIn 0.5s ease-out;
+        }
+        h1, h2, h3 {
+            color: var(--color-primary);
+            font-weight: 600;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 0.5em;
+            margin-top: 0;
+            margin-bottom: 1em;
+        }
+
+        /* ---------------------- BUTTON STYLES ---------------------- */
+        input[type="submit"], a.button {
+            display: inline-block;
+            padding: 0.75em 1.5em;
+            margin-top: 1em;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--color-primary);
+            color: var(--color-surface);
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        input[type="submit"]:hover, a.button:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+        }
+        
+        /* Added for the primary success action */
+        .primary-action {
+            margin: 2em 0;
+            text-align: center;
+        }
+        .primary-action .button-success {
+            font-size: 1.2em;
+            padding: 1em 2em;
+            background-color: var(--color-success);
+        }
+        .primary-action .button-success:hover {
+            background-color: darkgreen;
+            transform: translateY(-2px);
+        }
+
+        /* ---------------------- THEME SWITCH (Unmodified) ---------------------- */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 1.5em;
+            right: 2em;
+            z-index: 10;
+            color: var(--color-text);
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+            margin-left: 10px;
+        }
+        .theme-switch input {
+            display: none;
+        }
+        .slider {
+            background-color: var(--color-text-secondary);
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+        }
+        .slider:before {
+            background-color: var(--color-surface);
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            width: 16px;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: var(--color-primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* ---------------------- STATUS COLORS (Unmodified) ---------------------- */
+        .status-text {
+            font-weight: bold;
+            padding: 0.2em 0.5em;
+            border-radius: 4px;
+            display: inline-block;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        .status-SUCCESS {
+            color: var(--color-success);
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        .status-FAILURE {
+            color: var(--color-failure);
+            background-color: rgba(229, 57, 53, 0.1);
+        }
+        .status-PENDING, .status-PROGRESS {
+            color: orange;
+            background-color: rgba(255, 165, 0, 0.1);
+        }
+
+        /* ---------------------- RAW OUTPUT STYLES (Unmodified) ---------------------- */
+        pre { 
+            background: var(--color-background); 
+            padding: 1.5em; 
+            border-radius: 8px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+    
     {% if task.state == 'PENDING' or task.state == 'PROGRESS' %}
         <meta http-equiv="refresh" content="5">
     {% endif %}
 </head>
 <body>
-    <h1>Audit Status for Task: {{ task.id }}</h1>
-    
-    <h2>Current Status: {{ task.state }}</h2>
+    <div class="theme-switch-wrapper">
+        <label for="theme-switch">Dark Mode</label>
+        <label class="theme-switch" for="theme-switch">
+            <input type="checkbox" id="theme-switch" />
+            <div class="slider round"></div>
+        </label>
+    </div>
 
-    {% if task.state == 'SUCCESS' %}
-        <h3>Results:</h3>
-        <pre><code>{{ task.result }}</code></pre>
-    {% elif task.state == 'FAILURE' %}
-        <p>The task failed. Here is the error message:</p>
-        <pre><code>{{ task.result }}</code></pre>
-    {% else %}
-        <p>Your audit is running. This page will automatically refresh every 5 seconds. Please wait...</p>
-    {% endif %}
+    <div class="container">
+        <h1>Audit Status for Task: {{ task.id }}</h1>
+        
+        <h2>Current Status: <span class="status-text status-{{ task.state | upper }}">{{ task.state }}</span></h2>
 
-    <a href="/">Run Another Audit</a>
+        {% if task.state == 'SUCCESS' %}
+            <h2 style="color: var(--color-success); border-bottom: none;">Task Complete! ✅</h2>
+            <div class="primary-action">
+                <a href="/status/{{ task.id }}" class="button button-success">
+                    View Detailed Audit Report
+                </a>
+            </div>
+            <p>
+                <a href="/results/{{ task.id }}" style="color: var(--color-text-secondary);">View Raw Output Log</a>
+            </p>
+
+        {% elif task.state == 'FAILURE' %}
+            <p style="color: var(--color-failure); font-weight: bold;">The task failed. Here is the error message:</p>
+            <pre><code>{{ task.result }}</code></pre>
+        {% else %}
+            <p>Your audit is running. This page will automatically refresh every 5 seconds. Please wait...</p>
+        {% endif %}
+
+        <a href="/" class="button">Run Another Audit</a>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'user-theme';
+        const body = document.body;
+        const themeSwitch = document.getElementById('theme-switch');
+
+        function setTheme(theme) {
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem(STORAGE_KEY, theme);
+            themeSwitch.checked = (theme === 'dark');
+        }
+
+        const storedTheme = localStorage.getItem(STORAGE_KEY);
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (storedTheme) {
+            setTheme(storedTheme);
+        } else if (prefersDark) {
+            setTheme('dark');
+        } else {
+            setTheme('light');
+        }
+
+        themeSwitch.addEventListener('change', (e) => {
+            setTheme(e.target.checked ? 'dark' : 'light');
+        });
+    </script>
 </body>
 </html>

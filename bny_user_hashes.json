@@ -1,0 +1,22 @@
+{
+  "john_smith_md5_bny": "893b6f75deb5e3b563ba314bc24038a5",
+  "john_smith_sha256_bny": "07248d1ada34b22871bad1e7edf3f5156dba6764a82f783a885525049f7d3f13",
+  "john_smith_pbkdf2": "pbkdf2$f78ca2d62db33980aa0edb67366142c0$7246322da40708569e16de168112176e66e09f4e0fbf74fbe0d259954273c965",
+  "john_smith_bcrypt": "$2b$12$dBFdjTwPtNKfA.Z1UwE4tOnyxh6SM.ka3iZFsUHafXGnBspG9kP/S",
+  "john_smith_argon2": "$argon2id$v=19$m=65536,t=3,p=4$20ARxHi7hZRnNCTQbQ00tg$7TnovXNVrVwkUR1+Ke301Q4pqcoey/OnB2jaZ2D3UK8",
+  "maria_p_md5_bny": "3dcf17065cd8d0ce36cf79eda0febd1f",
+  "maria_p_sha256_bny": "6799a213a1dc57bfeaee741ee8c422926daa197efacd21e8f47b4feaf7e59f77",
+  "maria_p_pbkdf2": "pbkdf2$028d69a9e47263fb55dbab16276aaaf5$d00081e13b63fbbeb23edac1033b1593aa6a8d812a69628d15c0d6d0457d0bfa",
+  "maria_p_bcrypt": "$2b$12$2h7VWI6/pG4O5OsuVjDRveU.cm2hMqmZWgVXKa1C63qpz9hB.bqzK",
+  "maria_p_argon2": "$argon2id$v=19$m=65536,t=3,p=4$Sgnmcgbe2GX8nn1MmslMCQ$ZUTcJ9lcbf5QESUtOLsTeVBMH3uh8d1mysZLlqn8k+0",
+  "bny_admin_md5_bny": "f172719e9eccff1a5c7ff18c447c65a9",
+  "bny_admin_sha256_bny": "3247252d75ecf8c83219c44a94c93d24a8c10e170cd54718502081156306d031",
+  "bny_admin_pbkdf2": "pbkdf2$3010807b26d65eaedb3f3eaa8934c413$345b1af3b2ba434941b0be476ba61f42e5827c0165c31ff7371e26d81c58ca6d",
+  "bny_admin_bcrypt": "$2b$12$9KgyMnMT90hUIt0emq1U1.bYCrMdY9gVhl.gKLF4lNYaZGa/ewwtS",
+  "bny_admin_argon2": "$argon2id$v=19$m=65536,t=3,p=4$NXjl2T0WNr9AVrkvkgCQaA$VqdTp53KnPZ71AxSw0fBHrityja5GvZJxQ3BHNSjEfE",
+  "default_user_md5_bny": "e2b6db2af404c7dd05a2b68536f52537",
+  "default_user_sha256_bny": "777776c7b0cd819b3690560e0ba3b863e57b6e15673bd4fa63e619fb111b00ea",
+  "default_user_pbkdf2": "pbkdf2$bc2346cbffe43faae3965921f3c71a87$d07a1b60df4ff17f4d546e2940a753e9e4959078de46317088a83aee5e7db8cb",
+  "default_user_bcrypt": "$2b$12$EKRd2F/7RwOqZpsssYlBn.OY1SqGC112wfu71/WQN4iCn1a/Q5teG",
+  "default_user_argon2": "$argon2id$v=19$m=65536,t=3,p=4$ZjnMF9TsdJdxU/jygDuzgQ$cR+4LJWXgdt/nbjAd/YFPEqA9ZiPjgjUsbWPzY7EuNE"
+}

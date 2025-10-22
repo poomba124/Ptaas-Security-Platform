@@ -2,66 +2,459 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Password Audit Uploader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .form-group { margin-bottom: 1em; }
+        /* ---------------------- THEME VARIABLES ---------------------- */
+        :root {
+            --color-primary: #1e88e5; /* Blue */
+            --color-primary-hover: #1565c0;
+            --color-background: #f0f2f5; /* Light Gray Background */
+            --color-surface: #ffffff; /* White Card/Container */
+            --color-surface-secondary: #f9f9f9; /* Lighter background for form groups */
+            --color-text: #212121; /* Dark Text */
+            --color-text-secondary: #757575;
+            --color-border: #e0e0e0;
+            --color-shadow: rgba(0, 0, 0, 0.1);
+            --color-success: #4caf50;
+            --color-failure: #e53935;
+        }
+        [data-theme='dark'] {
+            --color-primary: #64b5f6;
+            --color-primary-hover: #42a5f5;
+            --color-background: #0d1117; /* GitHub Dark */
+            --color-surface: #161b22; /* Dark Card/Container */
+            --color-surface-secondary: #21262d; /* Lighter background for form groups */
+            --color-text: #e0e0e0; /* Light Text */
+            --color-text-secondary: #bdbdbd;
+            --color-border: #303030;
+            --color-shadow: rgba(255, 255, 255, 0.05);
+            --color-success: #81c784;
+            --color-failure: #e57373;
+        }
+
+        /* ---------------------- BASE STYLES & LAYOUT ---------------------- */
+        * {
+            box-sizing: border-box;
+            transition: background-color 0.4s, color 0.4s, border-color 0.4s, box-shadow 0.4s, transform 0.4s;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .container {
+            max-width: 650px;
+            width: 100%;
+            margin: auto;
+            padding: 40px;
+            background: var(--color-surface);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px var(--color-shadow);
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            color: var(--color-text);
+            font-weight: 700;
+            font-size: 2em;
+            text-align: center;
+            padding-bottom: 0.5em;
+            margin-top: 0;
+            margin-bottom: 1.5em;
+        }
+        h1 span {
+            color: var(--color-primary);
+        }
+
+        /* ---------------------- FORM & INPUT STYLES ---------------------- */
+        .form-group {
+            margin-bottom: 1.5em;
+            padding: 1.2em;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background-color: var(--color-surface-secondary); 
+        }
+        label {
+            display: block;
+            margin-bottom: 0.6em;
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: 0.95em;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.3);
+        }
+        
+        /* ---------------------- FILE INPUT STYLING ---------------------- */
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+            width: 100%;
+        }
+        .file-upload-label {
+            display: block;
+            background: var(--color-primary);
+            color: var(--color-surface);
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .file-upload-label:hover {
+            background-color: var(--color-primary-hover);
+        }
+        .file-name {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: var(--color-text-secondary);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ---------------------- ATTACK MODE CARDS ---------------------- */
+        .mode-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .mode-card {
+            border: 2px solid var(--color-border);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            background-color: var(--color-surface);
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .mode-card:hover {
+            border-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 136, 229, 0.2);
+        }
+        .mode-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .mode-card.selected {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.4);
+            background-color: var(--color-surface-secondary);
+        }
+        .mode-card .card-title {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .mode-card .card-desc {
+            font-size: 0.85em;
+            color: var(--color-text-secondary);
+        }
+
+        /* ---------------------- BUTTON STYLES & ANIMATION ---------------------- */
+        input[type="submit"] {
+            width: 100%;
+            display: block;
+            padding: 15px;
+            margin-top: 2em;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--color-primary);
+            color: var(--color-surface);
+            font-weight: 700;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(30, 136, 229, 0.4);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        input[type="submit"]:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            animation-play-state: paused;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.4); }
+            70% { transform: scale(1.01); box-shadow: 0 0 0 10px rgba(30, 136, 229, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 136, 229, 0); }
+        }
+
+        /* ---------------------- THEME SWITCH ---------------------- */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 25px; /* Adjusted position */
+            right: 25px;
+            z-index: 10;
+            color: var(--color-text);
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+            margin-left: 10px;
+        }
+        .theme-switch input {
+            display: none;
+        }
+        .slider {
+            background-color: var(--color-text-secondary);
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+        }
+        .slider:before {
+            background-color: var(--color-surface);
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            width: 16px;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: var(--color-primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
-    <h1>Upload Hash File for Auditing</h1>
-    <form method="post" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="company_name">Company Name (optional, for analysis):</label><br>
-            <input type="text" name="company_name" placeholder="e.g., SecureCorp">
-        </div>
+    <div class="theme-switch-wrapper">
+        <label for="theme-switch">Dark Mode</label>
+        <label class="theme-switch" for="theme-switch">
+            <input type="checkbox" id="theme-switch" />
+            <div class="slider round"></div>
+        </label>
+    </div>
 
-        <input type="submit" value="Start Audit">
-        <div class="form-group">
-            <label for="hash_file">Upload JSON Hash File:</label><br>
-            <input type="file" name="hash_file" required>
-        </div>
+    <div class="container">
+        <h1><span>Password</span> Audit Uploader 🔒</h1>
+        
+        <form method="post" enctype="multipart/form-data">
+            
+            <div id="company-name-group" class="form-group">
+                <label for="company_name">Company Name (Required for AI mode, optional for others):</label>
+                <input type="text" id="company_name" name="company_name" placeholder="e.g., SecureCorp">
+            </div>
 
-        <div class="form-group">
-            <strong>Select Attack Mode:</strong><br>
-            <input type="radio" id="dict_mode" name="attack_mode" value="dictionary" checked>
-            <label for="dict_mode">Dictionary Attack</label><br>
-            <input type="radio" id="mask_mode" name="attack_mode" value="mask">
-            <label for="mask_mode">Mask Attack</label>
-        </div>
+            <div class="form-group">
+                <label>Upload JSON Hash File:</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" name="hash_file" id="hash_file_input" required>
+                    <div class="file-upload-label">Choose Hash File</div>
+                    <span class="file-name" id="hash_file_name">No file selected.</span>
+                </div>
+            </div>
 
-        <div id="dictionary-inputs" class="form-group">
-            <label for="wordlist_file">Upload Wordlist File (optional, uses default if empty):</label><br>
-            <input type="file" name="wordlist_file">
-        </div>
+            <div class="form-group">
+                <label>Select Attack Mode:</label>
+                <div class="mode-selection">
+                    
+                    <label class="mode-card" data-mode="dictionary">
+                        <input type="radio" id="dict_mode" name="attack_mode" value="dictionary" checked>
+                        <div class="card-title">📖 Dictionary Attack</div>
+                        <div class="card-desc">Uses wordlists/custom files for fast, common-password checking.</div>
+                    </label>
+                    
+                    <label class="mode-card" data-mode="mask">
+                        <input type="radio" id="mask_mode" name="attack_mode" value="mask">
+                        <div class="card-title">🎭 Mask Attack</div>
+                        <div class="card-desc">Brute-forces based on specific patterns (e.g., `?l?d?d?d`).</div>
+                    </label>
+                    
+                    <label class="mode-card" data-mode="ai">
+                        <input type="radio" id="ai_mode" name="attack_mode" value="ai">
+                        <div class="card-title">🧠 AI Smart Attack</div>
+                        <div class="card-desc">Generates hyper-targeted mutations based on the Company Name.</div>
+                    </label>
 
-        <div id="mask-inputs" class="form-group" style="display: none;">
-            <label for="mask">Enter Mask Pattern:</label><br>
-            <input type="text" name="mask" placeholder="e.g., ?u?l?l?l?d?d">
-            <p><small>Use ?l=lower, ?u=upper, ?d=digit, ?s=special</small></p>
-        </div>
+                </div>
+            </div>
 
-        <input type="submit" value="Start Audit">
-    </form>
+            <div id="dictionary-inputs" class="form-group">
+                <label>Upload Custom Wordlist (optional):</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" name="wordlist_file" id="wordlist_file_input">
+                    <div class="file-upload-label">Choose Wordlist</div>
+                    <span class="file-name" id="wordlist_file_name">Uses default list if empty.</span>
+                </div>
+            </div>
+
+            <div id="mask-inputs" class="form-group" style="display: none;">
+                <label for="mask">Enter Mask Pattern:</label>
+                <input type="text" name="mask" placeholder="e.g., ?u?l?l?l?d?d">
+                <p style="color: var(--color-text-secondary); margin-top: 5px; font-size: 0.85em;">
+                    <small>Codes: ?l=lower, ?u=upper, ?d=digit, ?s=special</small>
+                </p>
+            </div>
+            
+            <div id="ai-inputs" class="form-group" style="display: none;">
+                <label for="ai_intensity">Select AI Attack Intensity:</label>
+                <select id="ai_intensity" name="ai_intensity">
+                    <option value="low">Low (Fast, Basic Rules)</option>
+                    <option value="medium" selected>Medium (Balanced, Leetspeak, Symbols)</option>
+                    <option value="high">High (Aggressive, Deep Mutation Rules)</option>
+                </select>
+            </div>
+
+            <input type="submit" value="Start Audit">
+        </form>
+    </div>
 
     <script>
-        const dictRadio = document.getElementById('dict_mode');
-        const maskRadio = document.getElementById('mask_mode');
+        const hashFileInput = document.getElementById('hash_file_input');
+        const wordlistFileInput = document.getElementById('wordlist_file_input');
+        const hashFileNameDisplay = document.getElementById('hash_file_name');
+        const wordlistFileNameDisplay = document.getElementById('wordlist_file_name');
+        const modeRadios = document.querySelectorAll('input[name="attack_mode"]');
+        const modeCards = document.querySelectorAll('.mode-card');
+        
         const dictInputs = document.getElementById('dictionary-inputs');
         const maskInputs = document.getElementById('mask-inputs');
+        const aiInputs = document.getElementById('ai-inputs');
+        const companyNameInput = document.getElementById('company_name');
 
-        dictRadio.addEventListener('change', () => {
-            if (dictRadio.checked) {
-                dictInputs.style.display = 'block';
-                maskInputs.style.display = 'none';
-            }
+        function updateFileName(inputElement, displayElement, defaultText) {
+            displayElement.textContent = inputElement.files.length > 0 
+                ? inputElement.files[0].name 
+                : defaultText;
+        }
+
+        hashFileInput.addEventListener('change', () => {
+            updateFileName(hashFileInput, hashFileNameDisplay, 'No file selected.');
+        });
+        wordlistFileInput.addEventListener('change', () => {
+            updateFileName(wordlistFileInput, wordlistFileNameDisplay, 'Uses default list if empty.');
         });
 
-        maskRadio.addEventListener('change', () => {
-            if (maskRadio.checked) {
-                dictInputs.style.display = 'none';
+        function toggleModeInputs() {
+            const selectedMode = document.querySelector('input[name="attack_mode"]:checked').value;
+            
+            dictInputs.style.display = 'none';
+            maskInputs.style.display = 'none';
+            aiInputs.style.display = 'none';
+
+            companyNameInput.removeAttribute('required');
+
+            if (selectedMode === 'dictionary') {
+                dictInputs.style.display = 'block';
+            } else if (selectedMode === 'mask') {
                 maskInputs.style.display = 'block';
+            } else if (selectedMode === 'ai') {
+                aiInputs.style.display = 'block';
+                companyNameInput.setAttribute('required', 'required');
             }
+
+            modeCards.forEach(card => {
+                const radio = card.querySelector('input[type="radio"]');
+                if (radio.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        }
+
+        modeRadios.forEach(radio => radio.addEventListener('change', toggleModeInputs));
+        
+        modeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const radio = card.querySelector('input[type="radio"]');
+                if (!radio.checked) {
+                    radio.checked = true;
+                    toggleModeInputs();
+                }
+            });
+        });
+        
+        document.addEventListener('DOMContentLoaded', toggleModeInputs); 
+    </script>
+    
+    <script>
+        const STORAGE_KEY = 'user-theme';
+        const body = document.body;
+        const themeSwitch = document.getElementById('theme-switch');
+
+        function setTheme(theme) {
+            body.setAttribute('data-theme', theme);
+            localStorage.setItem(STORAGE_KEY, theme);
+            themeSwitch.checked = (theme === 'dark');
+        }
+
+        const storedTheme = localStorage.getItem(STORAGE_KEY);
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (storedTheme) {
+            setTheme(storedTheme);
+        } else if (prefersDark) {
+            setTheme('dark');
+        } else {
+            setTheme('light');
+        }
+
+        themeSwitch.addEventListener('change', (e) => {
+            setTheme(e.target.checked ? 'dark' : 'light');
         });
     </script>
 </body>
