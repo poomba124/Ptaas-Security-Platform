@@ -37,7 +37,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+@app.route('/dashboard')
+def dashboard():
+    # Find all jobs in the collection and sort them by submission date (newest first)
+    # Using sort() ensures recent jobs appear first.
+    all_jobs = jobs_collection.find().sort('submitted_at', -1)
 
+    # Render the dashboard template, passing the list of jobs to it
+    return render_template('dashboard.html', jobs=all_jobs)
 
 
 @app.route('/', methods=['GET', 'POST'])

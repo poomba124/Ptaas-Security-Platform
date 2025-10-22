@@ -14,10 +14,7 @@ ph = PasswordHasher()
 
 # A single list of users and their passwords
 users = {
-    "john_smith": b"mysecurepass",
-    "maria_p": b"BNY_2025",
-    "bny_admin": b"Password1",
-    "default_user": b"password123"
+    "john_smith": b"Ab1"
 }
 
 out = {}
@@ -28,12 +25,12 @@ for username, pw in users.items():
     
     # 1. MD5 (legacy, insecure) - PEPPERED
     # We combine the password and the company name before hashing.
-    peppered_pw = pw + COMPANY_PEPPER
+    peppered_pw = pw 
     out[f"{username}_md5_bny"] = hashlib.md5(peppered_pw).hexdigest()
 
     # 2. SHA-256 (fast, unsalted) - PEPPERED
     # We combine the password and the company name before hashing.
-    peppered_pw = pw + COMPANY_PEPPER
+    peppered_pw = pw 
     out[f"{username}_sha256_bny"] = hashlib.sha256(peppered_pw).hexdigest()
     
     # 3. PBKDF2 (standard KDF) - Uses its own strong random salt
