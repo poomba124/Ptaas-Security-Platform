@@ -283,15 +283,21 @@ def check_compliance(password: str, company_name: str) -> dict:
 def score_visualization(avg_entropy: float, compliance_rate: float) -> str:
     """Provides a simple A-F scorecard based on results."""
     # Logic: Higher compliance AND higher average entropy results in a better grade
-    if compliance_rate >= 80 and avg_entropy > 5.0: # 5.0 is a reasonable mid-range score for the simplified calc
+    if compliance_rate >= 90 and avg_entropy > 6.0:
         return "A+"
+    elif compliance_rate >= 80 and avg_entropy > 5.0:
+        return "A"
+    elif compliance_rate >= 70 and avg_entropy > 4.5:
+        return "B+"
     elif compliance_rate >= 60 and avg_entropy > 4.0:
         return "B"
-    elif compliance_rate >= 40:
+    elif compliance_rate >= 50 and avg_entropy > 3.5:
+        return "C+"
+    elif compliance_rate >= 40 and avg_entropy > 3.0:
         return "C"
-    elif compliance_rate >= 20:
+    elif compliance_rate >= 30:
         return "D"
-    else:
+    else: # compliance_rate < 30
         return "F"
 
 def analyze_passwords(cracked_passwords: list, company_name: str = None):
@@ -561,21 +567,25 @@ def main():
             try:
                 user, cand, htype, wid = results_q.get(timeout=1.0)
             except queue.Empty:
-                if producer_thread and not producer_thread.is_alive() and job_q.empty():
+                if not producer_thread.is_alive() and job_q.empty():
+                    run_completed_naturally = True
                     break
                 continue
 
-            # Store the found password
+            #print(f"[FOUND by worker {wid}] {user} -> {cand} (type={htype})") # Keep this print
+
+            # --- Store data for JSON output ---
             report_data["cracked_passwords"].append({
                 "user": user,
                 "password": cand,
                 "hash_type": htype
+                # Add entropy/compliance later if keeping those features
             })
 
             if htype in timing_data:
                 timing_data[htype]['found_count'] += 1
-                if timing_data[htype]['found_count'] == total_hashes_by_type.get(htype, 0):
-                    timing_data[htype]['end_time'] = time.time()
+                # Record the time the *last* password of this type was found
+                timing_data[htype]['last_found_time'] = time.time() # <-- ADD THIS LINE
                     
             results_q.task_done()
             
@@ -601,12 +611,16 @@ def main():
             rate = (len(found) / len(user_hashes)) * 100
             report_data["summary"]["crack_rate_percent"] = round(rate, 2)
 
+                # --- Modified logic in finally block ---
         for htype, data in timing_data.items():
-            if data['end_time']:
-                crack_duration = data['end_time'] - start_time
+        # Use the time the LAST password of this type was found
+            if 'last_found_time' in data:
+                # Calculate duration from start until last password of this type found
+                crack_duration = data['last_found_time'] - start_time
                 report_data["performance_benchmark"][htype.upper()] = round(crack_duration, 4)
-            
-        # --- NEW: Advanced Policy & Intelligence Analysis ---
+    # --- END MODIFICATION ---
+
+                # --- NEW: Advanced Policy & Intelligence Analysis ---
         
         total_entropy = 0.0
         total_compliant = 0

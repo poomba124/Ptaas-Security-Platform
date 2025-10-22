@@ -14,11 +14,21 @@ ph = PasswordHasher()
 
 # A single list of users and their passwords
 users = {
-    "john_smith": b"password",
-    "Eve": b"amazon123",
-    "Adam": b"qwerty",
-    "Noel": b"asdfg",
-    "Dave": b"Passw0rd442"
+    # Simple Dictionary Hits
+    "alice": b"password",
+    "bob": b"123456",
+    # Rule-Based Hits (from 'password')
+    "charlie": b"Password123",
+    "diana": b"p@ssw0rd!",
+    # Keyboard Pattern
+    "edward": b"qwerty123",
+    # Company Name Related (Example: company = "TestCorp")
+    "frank": b"Testcorp2024",
+    "grace": b"adminTestcorp",
+    # Mask Hit (Example: ?u?l?l?d?d?s)
+    "henry": b"Sec12!",
+    # A stronger password (won't be found by simple lists/rules)
+    "irene": b"Str0ngP@sswOrd!_XyZ"
 }
 
 out = {}

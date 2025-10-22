@@ -590,10 +590,6 @@
                     <h3>Time to Crack Benchmark (Seconds)</h3>
                     <canvas id="performanceChart"></canvas>
                 </div>
-                <div class="chart-container">
-                    <h3>Top 5 Cracked Passwords by Frequency</h3>
-                    <canvas id="topPasswordsChart"></canvas>
-                </div>
             </div>
 
             <h3>Detailed Cracked Hash Table</h3>
@@ -625,7 +621,11 @@
             <script>
                 // This script block should only run if job.status == 'SUCCESS'
                 const reportData = {{ job.result_data | tojson }};
-                let performanceChart, topPasswordsChart;
+                let performanceChart;
+
+                // --- ADD THIS LOG ---
+                console.log("Full Report Data Received by JS:", reportData); 
+                // --- END LOG ---
 
                 function getThemeColors() {
                     const isDark = document.body.getAttribute('data-theme') === 'dark';
@@ -644,56 +644,52 @@
                     // --- Performance Bar Chart ---
                     const perfCtx = document.getElementById('performanceChart').getContext('2d');
                     const perfData = reportData.performance_benchmark;
-                    performanceChart = new Chart(perfCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: Object.keys(perfData),
-                            datasets: [{
-                                label: 'Time in Seconds',
-                                data: Object.values(perfData),
-                                backgroundColor: colors.barColor,
-                                borderColor: colors.barColor.replace('0.8', '1'),
-                                borderWidth: 1
-                            }]
-                        },
-                        options: { 
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            scales: { 
-                                y: { 
-                                    beginAtZero: true, 
-                                    grid: { color: colors.gridColor }, 
-                                    ticks: { color: colors.textColor } 
-                                },
-                                x: {
-                                    grid: { display: false },
-                                    ticks: { color: colors.textColor }
-                                }
-                            },
-                            plugins: { legend: { labels: { color: colors.textColor } } }
-                        }
-                    });
 
-                    // --- Top Passwords Pie Chart ---
-                    const topCtx = document.getElementById('topPasswordsChart').getContext('2d');
-                    const topData = reportData.top_passwords;
-                    topPasswordsChart = new Chart(topCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: topData.map(p => p.password),
-                            datasets: [{
-                                label: 'Count',
-                                data: topData.map(p => p.count),
-                                backgroundColor: colors.doughnutColors
-                            }]
-                        },
+                    // --- ADD THESE LOGS ---
+                    console.log("Performance Benchmark Data for Chart:", perfData); 
+                    if (perfData && typeof perfData === 'object') { // Check if it's an object
+                        console.log("Performance Labels:", Object.keys(perfData));
+                        console.log("Performance Values:", Object.values(perfData));
+                        // Check if values are actually numbers
+                        console.log("Performance Values are Numbers:", Object.values(perfData).every(v => typeof v === 'number' && isFinite(v)));
+                    } else {
+                        console.log("Performance Benchmark data is missing, not an object, or empty!");
+                    }
+                    // --- END LOGS ---
+                    
+
+                    if (perfData && typeof perfData === 'object' && Object.keys(perfData).length > 0) { 
+                performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(perfData),
+                    datasets: [{
+                        label: 'Time in Seconds',
+                        // Filter out non-numeric data just in case
+                        data: Object.values(perfData).map(v => (typeof v === 'number' && isFinite(v)) ? v : 0), 
+                        backgroundColor: colors.barColor,
+                        borderColor: colors.barColor.replace('0.8', '1'),
+                        borderWidth: 1
+                    }]
+                },
                         options: {
                             responsive: true,
                             maintainAspectRatio: true,
                             plugins: { legend: { labels: { color: colors.textColor } } }
                         }
                     });
+        } else {
+            console.error("Cannot create Performance Chart: Data is missing, empty, or invalid.");
+            // Optionally display a message on the page
+            perfCtx.font = "16px Inter";
+            perfCtx.fillStyle = getThemeColors().textColor; // Use theme color
+            perfCtx.textAlign = "center";
+            perfCtx.fillText("No benchmark data available to display.", perfCtx.canvas.width / 2, 50);
+        }
                 }
+
+        // --- Top Passwords Chart code was REMOVED ---
+    
                 
                 function updateChartTheme(chart) {
                     if (!chart) return;
@@ -720,6 +716,12 @@
                     
                     chart.update();
                 }
+                
+                document.getElementById('theme-switch').addEventListener('change', () => {
+                setTimeout(() => {
+                    updateChartTheme(performanceChart); // Only update performanceChart
+                }, 100);
+            });
 
                 // --- Security Score dynamic class application ---
                 document.addEventListener('DOMContentLoaded', () => {
