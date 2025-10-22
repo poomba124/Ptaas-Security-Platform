@@ -327,11 +327,12 @@ def analyze_passwords(cracked_passwords: list, company_name: str = None):
     pii_count = 0
     seq_count = 0
     keyboard_count = 0
+    other_weak_count = 0
     classified_users = set()
 
     for item in cracked_passwords:
         pw = item['password']
-        user = item['user']
+        user = item.get('user', '')
         is_classified = False
 
         # --- Policy/Pattern Counts ---
@@ -344,38 +345,38 @@ def analyze_passwords(cracked_passwords: list, company_name: str = None):
         if pw.islower():
             all_lowercase_count += 1
 
-        # --- NEW: Vulnerability Classification ---
-        
-        # 1. PII/Company Info
-        if company_name and (company_name.lower() in pw.lower() or user.lower() in pw.lower()):
-            pii_count += 1
-            is_classified = True
-            classified_users.add(user)
-        
-        # 2. Keyboard Patterns
-        if 'qwerty' in pw.lower() or 'asdfg' in pw.lower():
-            keyboard_count += 1
-            is_classified = True
-            classified_users.add(user)
-            
-        # 3. Sequential/Predictable 
-        if not is_classified and (re.search(r'\d+$', pw) or pw.lower() in COMMON_WORDS):
-            seq_count += 1
-            is_classified = True
-            classified_users.add(user)
-            
+        # --- Vulnerability Classification Logic ---
+        # 1. PII/Company Info (Check first, as it's often a policy violation)
+        # Check if password contains company name OR parts of the username (simple check)
+        username_part = user.split('_')[0].lower() # Simple split for cases like "alice_md5"
+        if company_name and (company_name.lower() in pw.lower() or (len(username_part)>2 and username_part in pw.lower())):
+             pii_count += 1
+             is_classified = True
+
+        # 2. Keyboard Patterns (Check next)
+        if not is_classified and ('qwerty' in pw.lower() or 'asdfg' in pw.lower() or '1qaz' in pw.lower()):
+             keyboard_count += 1
+             is_classified = True
+
+        # 3. Sequential/Predictable (Lower priority)
+        if not is_classified and (re.search(r'(123|abc|xyz)', pw.lower()) or re.search(r'\d+$', pw) or pw.lower() in COMMON_WORDS):
+             seq_count += 1
+             is_classified = True
+
+        # 4. Other Weak (Catch-all if not classified above)
         if not is_classified:
-             analysis["vulnerability_classification"]["Other_Weak"] += 1
-             classified_users.add(user)
+             other_weak_count += 1
 
 
-    analysis["common_patterns"]["contains_company_name_percent"] = round((company_name_count / count) * 100, 2)
-    analysis["common_patterns"]["ends_with_year_percent"] = round((ends_with_year_count / count) * 100, 2)
-    analysis["common_patterns"]["is_all_lowercase_percent"] = round((all_lowercase_count / count) * 100, 2)
-    
+    if count > 0: # Avoid division by zero
+        analysis["common_patterns"]["contains_company_name_percent"] = round((company_name_count / count) * 100, 2)
+        analysis["common_patterns"]["ends_with_year_percent"] = round((ends_with_year_count / count) * 100, 2)
+        analysis["common_patterns"]["is_all_lowercase_percent"] = round((all_lowercase_count / count) * 100, 2)
+
     analysis["vulnerability_classification"]["PII_Company_Info"] = pii_count
     analysis["vulnerability_classification"]["Sequential_Predictable"] = seq_count
     analysis["vulnerability_classification"]["Keyboard_Patterns"] = keyboard_count
+    analysis["vulnerability_classification"]["Other_Weak"] = other_weak_count
 
     return analysis
 

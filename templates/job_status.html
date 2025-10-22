@@ -535,6 +535,55 @@
                 </ul>
             </div>
             {% endif %}
+
+            {% if job.result_data.analysis and job.result_data.analysis.vulnerability_classification %}
+            <div class="analysis-section">
+                <h2>Vulnerability Classification</h2>
+                <p style="color: var(--color-text-secondary);">Breakdown of the types of weaknesses found among the <strong>{{ job.result_data.summary.cracked_count }}</strong> cracked passwords:</p>
+                <table>
+                    <thead>
+                        <tr><th>Vulnerability Type</th><th>Count</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PII / Company Info Related</td>
+                            <td>{{ job.result_data.analysis.vulnerability_classification.PII_Company_Info }}</td>
+                        </tr>
+                        <tr>
+                            <td>Sequential / Predictable (e.g., password123)</td>
+                            <td>{{ job.result_data.analysis.vulnerability_classification.Sequential_Predictable }}</td>
+                        </tr>
+                        <tr>
+                            <td>Keyboard Patterns (e.g., qwerty)</td>
+                            <td>{{ job.result_data.analysis.vulnerability_classification.Keyboard_Patterns }}</td>
+                        </tr>
+                         <tr>
+                            <td>Other Weak Passwords</td>
+                            <td>{{ job.result_data.analysis.vulnerability_classification.Other_Weak }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if job.result_data.top_offenders %}
+            <div class="analysis-section">
+                <h2>Top 5 Most Common Cracked Passwords</h2>
+                <table>
+                    <thead>
+                        <tr><th>Password</th><th>Times Found</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in job.result_data.top_offenders %}
+                        <tr>
+                            <td>{{ item.password }}</td>
+                            <td>{{ item.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
             
             <div class="charts">
                 <div class="chart-container">
@@ -562,6 +611,16 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            {% if job.result_data.analysis %}
+            <div class="analysis-section"> <h2>High-Level Recommendations</h2>
+                <ul class="recommendation-list">
+                    {% for rec in job.result_data.analysis.recommendations %}
+                        <li>{{ rec }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
             
             <script>
                 // This script block should only run if job.status == 'SUCCESS'
