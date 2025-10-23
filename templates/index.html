@@ -288,9 +288,12 @@
         </label>
     </div>
     
+    
     <div class="container">
         <h1><span>Password</span> Audit Uploader 🔒</h1>
-        <p><a href="{{ url_for('dashboard') }}" class="file-upload-label">View Job History</a></p> 
+        <p><a href="{{ url_for('dashboard') }}" class="file-upload-label">View Job History</a>
+        <a href="{{ url_for('strength_checker_page') }}" class="file-upload-label" style="margin-top: 10px;">Test Individual Password Strength</a>
+        </p> 
         <form method="post" enctype="multipart/form-data">
             
             <div id="company-name-group" class="form-group">
@@ -325,7 +328,7 @@
                     
                     <label class="mode-card" data-mode="ai">
                         <input type="radio" id="ai_mode" name="attack_mode" value="ai">
-                        <div class="card-title">🧠 AI Smart Attack</div>
+                        <div class="card-title">Advanced Rule Based Attack</div>
                         <div class="card-desc">Generates hyper-targeted mutations based on the Company Name.</div>
                     </label>
 
@@ -360,6 +363,7 @@
 
             <input type="submit" value="Start Audit">
         </form>
+        
     </div>
 
     <script>
@@ -455,6 +459,50 @@
 
         themeSwitch.addEventListener('change', (e) => {
             setTheme(e.target.checked ? 'dark' : 'light');
+        });
+    </script>
+
+    <script>
+        const passwordInput = document.getElementById('password_input');
+        const checkButton = document.getElementById('check_strength_button');
+        const resultsDiv = document.getElementById('strength_results');
+
+        checkButton.addEventListener('click', () => {
+            const password = passwordInput.value;
+            resultsDiv.textContent = 'Analyzing...'; // Provide feedback
+            resultsDiv.style.backgroundColor = 'var(--color-surface-light)'; // Reset background
+
+            fetch('/check_strength', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultsDiv.textContent = `Error: ${data.error}`;
+                    resultsDiv.style.backgroundColor = 'rgba(229, 57, 53, 0.1)'; // Error color
+                } else {
+                    // Display similar to Bitwarden
+                    let strengthColor = 'var(--color-failure)'; // Default weak
+                    if (data.strength === "Moderate") strengthColor = 'var(--color-warning)';
+                    else if (data.strength === "Strong") strengthColor = 'var(--color-success)';
+                    else if (data.strength === "Very Strong") strengthColor = 'var(--color-success)';
+
+                    resultsDiv.innerHTML = `
+                        <p style="margin: 0;"><strong>Strength:</strong> <span style="color: ${strengthColor}; font-weight: bold;">${data.strength}</span></p>
+                        <p style="margin: 5px 0 0 0;"><strong>Estimated Time to Crack:</strong> ${data.crack_time}</p>
+                    `;
+                    resultsDiv.style.backgroundColor = 'var(--color-surface-light)';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.textContent = 'An error occurred while checking strength.';
+                resultsDiv.style.backgroundColor = 'rgba(229, 57, 53, 0.1)';
+            });
         });
     </script>
 </body>

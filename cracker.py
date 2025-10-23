@@ -73,7 +73,33 @@ def random_mutations(name, count=5):
         i = random.randrange(len(chars))
         chars[i] = random.choice(pool)
         yield ''.join(chars)
+    
+def seconds_to_human_readable(seconds):
+    """Converts a large number of seconds to a human-readable string (Bitwarden style)."""
+    if seconds < 0: return "Invalid time"
+    if seconds < 1e-6: return "Instantly" # Less than a microsecond
+    if seconds < 0.001: return f"{seconds * 1e6:.0f} microseconds"
+    if seconds < 1: return f"{seconds * 1000:.0f} milliseconds"
+    if seconds < 60: return f"{seconds:.0f} seconds"
 
+    minutes = seconds / 60
+    if minutes < 60: return f"{minutes:.0f} minutes"
+    hours = minutes / 60
+    if hours < 24: return f"{hours:.0f} hours"
+    days = hours / 24
+    if days < 30: return f"{days:.0f} days" # Approx month
+    months = days / 30.44 # Average days in month
+    if months < 12: return f"{months:.0f} months"
+    years = days / 365.25 # Account for leap year
+    if years < 100: return f"{years:.0f} years"
+    centuries = years / 100
+    if centuries < 10: return f"{centuries:.0f} centuries"
+    millennia = centuries / 10
+    if millennia < 1000: return f"{millennia:.0f} millennia"
+    # For extremely large numbers
+    if millennia < 1_000_000: return f"{millennia / 1000:.1f} thousand millennia"
+    if millennia < 1_000_000_000: return f"{millennia / 1_000_000:.1f} million millennia"
+    return "Eternity" # Practically uncrackable
 
 def generate_candidates(company_name: str, ai_intensity: str = 'medium', max_candidates: int = 1000):
     """
