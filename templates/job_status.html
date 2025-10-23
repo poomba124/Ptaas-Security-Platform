@@ -750,10 +750,11 @@
                     if (crackedPasswords.length > 0) {
                         // Define entropy ranges/bins
                         const entropyBins = {
-                            "Very Weak (0-3)": 0,
-                            "Weak (3-4)": 0,
-                            "Moderate (4-6)": 0,
-                            "Strong (6+)": 0
+                            "Very Weak (<40 bits)": 0,
+                            "Weak (40-60 bits)": 0,
+                            "Moderate (60-80 bits)": 0,
+                            "Strong (80-128 bits)": 0,
+                            "Very Strong (128+ bits)": 0
                         };
                         const binLabels = Object.keys(entropyBins);
 
@@ -761,10 +762,11 @@
                         crackedPasswords.forEach(item => {
                             const entropy = item.entropy; // Assumes entropy is calculated and stored
                             if (typeof entropy === 'number') {
-                                if (entropy < 3) entropyBins["Very Weak (0-3)"]++;
-                                else if (entropy < 4) entropyBins["Weak (3-4)"]++;
-                                else if (entropy < 6) entropyBins["Moderate (4-6)"]++;
-                                else entropyBins["Strong (6+)"]++;
+                                if (entropy < 40) entropyBins["Very Weak (<40 bits)"]++;
+                                else if (entropy < 60) entropyBins["Weak (40-60 bits)"]++;
+                                else if (entropy < 80) entropyBins["Moderate (60-80 bits)"]++;
+                                else if (entropy < 128) entropyBins["Strong (80-128 bits)"]++;
+                                else entropyBins["Very Strong (128+ bits)"]++;
                             }
                         });
 
@@ -781,6 +783,7 @@
                                     backgroundColor: [ // Different colors for strength
                                         colors.pieColors[1], // Red for Very Weak
                                         colors.pieColors[2], // Yellow for Weak
+                                        '#64b5f6',
                                         colors.pieColors[0], // Blue for Moderate
                                         colors.pieColors[3]  // Green for Strong
                                     ],

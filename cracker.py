@@ -15,6 +15,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import re
 from collections import Counter
+import math
 
 # Initialize Argon2 Password Hasher
 ph = PasswordHasher()
@@ -241,25 +242,31 @@ def verify_candidate(candidate: str, hash_str: str, htype: str) -> bool:
 # --- NEW: ADVANCED INTELLIGENCE & COMPLIANCE ---
 
 def calculate_shannon_entropy(password: str) -> float:
-    """Calculates a simplified Shannon Entropy score for a password."""
+    """Calculates the Shannon Entropy score for a password in bits."""
     if not password:
         return 0.0
-    
-    char_sets = 0
-    if re.search(r'[a-z]', password):
-        char_sets += 26
-    if re.search(r'[A-Z]', password):
-        char_sets += 26
-    if re.search(r'[0-9]', password):
-        char_sets += 10
-    if re.search(r'[^a-zA-Z0-9]', password):
-        char_sets += 32
 
-    if char_sets == 0:
+    # Determine the size of the character pool (N)
+    pool_size = 0
+    if re.search(r'[a-z]', password):
+        pool_size += 26
+    if re.search(r'[A-Z]', password):
+        pool_size += 26
+    if re.search(r'[0-9]', password):
+        pool_size += 10
+    # Consider a standard set of ~32 special characters
+    if re.search(r'[^a-zA-Z0-9]', password):
+        pool_size += 32 # You can adjust this number based on the specific specials you want to count
+
+    if pool_size == 0:
         return 0.0
-        
-    # Simplified Entropy calculation for scoring: H ≈ L * log2(N)
-    return len(password) * (char_sets ** 0.5 if char_sets > 1 else 0) / 10
+
+    # Calculate Shannon Entropy: H = L * log2(N)
+    # H = Entropy in bits
+    # L = Password Length
+    # N = Size of the pool of unique characters
+    entropy = len(password) * math.log2(pool_size)
+    return round(entropy, 2)
 
 
 def check_compliance(password: str, company_name: str) -> dict:
@@ -281,24 +288,26 @@ def check_compliance(password: str, company_name: str) -> dict:
     return policy
 
 def score_visualization(avg_entropy: float, compliance_rate: float) -> str:
-    """Provides a simple A-F scorecard based on results."""
-    # Logic: Higher compliance AND higher average entropy results in a better grade
-    if compliance_rate >= 90 and avg_entropy > 6.0:
-        return "A+"
-    elif compliance_rate >= 80 and avg_entropy > 5.0:
-        return "A"
-    elif compliance_rate >= 70 and avg_entropy > 4.5:
-        return "B+"
-    elif compliance_rate >= 60 and avg_entropy > 4.0:
-        return "B"
-    elif compliance_rate >= 50 and avg_entropy > 3.5:
-        return "C+"
-    elif compliance_rate >= 40 and avg_entropy > 3.0:
-        return "C"
-    elif compliance_rate >= 30:
-        return "D"
-    else: # compliance_rate < 30
-        return "F"
+    """Provides a simple A-F scorecard based on standard entropy (bits) and compliance rate."""
+    # Thresholds based on typical Shannon Entropy recommendations (in bits)
+    # Combined with compliance rate for overall grade.
+
+    if avg_entropy >= 80 and compliance_rate >= 90:
+        return "A+" # Very Strong average entropy AND High Compliance
+    elif avg_entropy >= 70 and compliance_rate >= 80:
+        return "A"  # Strong entropy AND Good Compliance
+    elif avg_entropy >= 60 and compliance_rate >= 70:
+        return "B+" # Fair entropy AND Decent Compliance
+    elif avg_entropy >= 50 and compliance_rate >= 60:
+        return "B"  # Fair entropy OR Decent Compliance (borderline)
+    elif avg_entropy >= 40 and compliance_rate >= 50:
+        return "C+" # Weak entropy OR Mediocre Compliance
+    elif avg_entropy >= 30 and compliance_rate >= 40:
+        return "C"  # Weak entropy AND Mediocre Compliance
+    elif avg_entropy >= 20 or compliance_rate >= 30:
+        return "D"  # Very Weak entropy OR Poor Compliance
+    else: # avg_entropy < 20 AND compliance_rate < 30
+        return "F"  # Very Weak entropy AND Very Poor Compliance
 
 def analyze_passwords(cracked_passwords: list, company_name: str = None):
     """Analyzes a list of cracked passwords for common weaknesses and classifies them."""

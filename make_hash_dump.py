@@ -13,39 +13,44 @@ COMPANY_PEPPER = b"BNY" # Define the company name as a bytes object
 ph = PasswordHasher()
 
 # A single list of users and their passwords
+# In make_hash_dump.py
+
+# Comprehensive list for testing all features with company name "Lenovo"
 users = {
-    # Simple Dictionary Hits
-    "alice": b"password",
-    "bob": b"123456",
-    "charlie": b"qwerty",
-    "diana": b"football",
-    "edward": b"welcome",
-    "fiona": b"dragon",
+    # --- For Dictionary + Rules Attack ---
+    "dict_user1": b"password",          # Direct hit from wordlist
+    "dict_user2": b"Lenovo",            # Direct hit (if base word in list) + Capitalize rule
+    "dict_user3": b"sunshine123",       # Base word + Suffix rule
+    "dict_user4": b"Welcome!",          # Base word + Capitalize + Suffix rule
+    "dict_user5": b"dr@gon",            # Base word + Leetspeak rule
+    "dict_user6": b"Adm1n",             # Base word 'admin' + Capitalize + Leetspeak 'i'
+    "dict_user7": b"PASSWORD",          # Base word + Uppercase rule
+    "dict_user8": b"123baseball",       # Base word + Prefix rule
 
-    # Rule-Based Hits (Capitalization, Suffixes, Leetspeak from wordlist)
-    "george": b"Password123", # From 'password'
-    "hannah": b"Welcome!",    # From 'welcome'
-    "ian": b"Qwerty1234",  # From 'qwerty'
-    "julia": b"dr@gon",      # From 'dragon' (leetspeak 'a')
-    "kevin": b"f00tball",    # From 'football' (leetspeak 'o')
-    "laura": b"Sun$hine",    # From 'sunshine' (leetspeak 's' + capitalization)
+    # --- For "AI" / Advanced Rule Attack (Seed: "Lenovo") ---
+    "ai_user1": b"lenovo",              # Basic variation
+    "ai_user2": b"LENOVO!",             # Basic variation + Suffix
+    "ai_user3": b"L3n0v0",              # Leetspeak variation
+    "ai_user4": b"Lenovo2024",          # Seed + Year variation
+    "ai_user5": b"adminLenovo",         # Common word combination
+    "ai_user6": b"LenovoSecure123",     # Seed + Common word + Suffix (tests combination rule)
+    "ai_user7": b"#LENOVO",             # Symbol prefix variation
 
-    # Keyboard Pattern (Will only be classified if cracked)
-    "mike": b"asdfgh",
+    # --- For Mask Attack ---
+    "mask_user1": b"Pass12",            # Example for mask: ?u?l?l?d?d
+    "mask_user2": b"Qaz!99",            # Example for mask: ?u?l?l?s?d?d
+    "mask_user3": b"hello$",            # Example for mask: ?l?l?l?l?l?s
 
-    # More Complex / Potentially Uncrackable by basic rules/list
-    "nancy": b"MyP@sswOrd!2024",
-    "oliver": b"Sup3rS3cur3!",
-    "penny": b"Manipal!@#", # Example using location context
-    "quentin": b"P@$$wOrdRuLe$",
+    # --- For Analysis (Keyboard Patterns, Predictable) ---
+    "analysis_user1": b"qwerty789",     # Keyboard pattern + Sequential
+    "analysis_user2": b"asdfg!",        # Keyboard pattern + Symbol
+    "analysis_user3": b"12345abc",      # Sequential
 
-    # Common Variations
-    "rita": b"password!",
-    "steve": b"admin123",
-    "tina": b"secret1",
-    "umar": b"india123", # Example using location context
-    "violet": b"123456!",
-    "walter": b"welcome1"
+    # --- More Complex / Harder to Crack ---
+    "complex_user1": b"L3n0v0Rul3$!",    # AI seed + Leet + Word + Suffix + Symbol
+    "complex_user2": b"MyN3wP@ss!",      # Not easily guessable by current rules/AI
+    "complex_user3": b"WelcomeToManipal25", # Requires word combination + Location + Year
+
 }
 
 out = {}
